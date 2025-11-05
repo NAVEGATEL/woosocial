@@ -165,6 +165,8 @@ CREATE TABLE IF NOT EXISTS logs_sistema (
     descripcion TEXT COMMENT 'Descripción detallada de la acción',
     ip_address VARCHAR(45) COMMENT 'Dirección IP del usuario',
     user_agent TEXT COMMENT 'User Agent del navegador',
+    is_done BOOLEAN DEFAULT FALSE COMMENT 'Si el problema ha sido resuelto',
+    solucion TEXT COMMENT 'Solución encontrada para el problema',
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha y hora del log',
     
     -- Clave foránea opcional

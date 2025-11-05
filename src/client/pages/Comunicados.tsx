@@ -18,7 +18,7 @@ interface Mensaje {
   email: string;
 }
 
-const Mensajes: React.FC = () => {
+const Comunicados: React.FC = () => {
   const { user } = useAuth();
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,24 +28,18 @@ const Mensajes: React.FC = () => {
   // Filtros
   const [filtroTipo, setFiltroTipo] = useState<string>('');
   const [busqueda, setBusqueda] = useState('');
-  
-  // Estados para edición
-  const [editando, setEditando] = useState(false);
-  const [isDone, setIsDone] = useState(false);
-  const [solucion, setSolucion] = useState('');
-  const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
-    if (user?.rol === 'admin') {
+    if (user) {
       loadMensajes();
     }
-  }, [user?.rol]);
+  }, [user]);
 
   const loadMensajes = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiService.getMessages();
+      const response = await apiService.getUserMessages();
       setMensajes(response.messages);
     } catch (err: any) {
       setError(err.message || 'Error al cargar mensajes');
@@ -53,46 +47,6 @@ const Mensajes: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSaveMessage = async () => {
-    if (!selectedMensaje) return;
-
-    try {
-      setGuardando(true);
-      await apiService.updateMessage(selectedMensaje.id, {
-        is_done: isDone,
-        solucion: solucion || undefined
-      });
-
-      // Actualizar el mensaje en la lista
-      setMensajes(mensajes.map((m: Mensaje) => 
-        m.id === selectedMensaje.id 
-          ? { ...m, is_done: isDone, solucion: solucion || null }
-          : m
-      ));
-
-      // Actualizar el mensaje seleccionado
-      setSelectedMensaje({
-        ...selectedMensaje,
-        is_done: isDone,
-        solucion: solucion || null
-      });
-
-      setEditando(false);
-      toast.success('Mensaje actualizado exitosamente');
-    } catch (err: any) {
-      toast.error(err.message || 'Error al actualizar mensaje');
-    } finally {
-      setGuardando(false);
-    }
-  };
-
-  const handleOpenMessage = (mensaje: Mensaje) => {
-    setSelectedMensaje(mensaje);
-    setIsDone(mensaje.is_done);
-    setSolucion(mensaje.solucion || '');
-    setEditando(false);
   };
 
   const getTipoColor = (tipo: string) => {
@@ -140,25 +94,13 @@ const Mensajes: React.FC = () => {
     });
   };
 
-  const mensajesFiltrados = mensajes.filter((mensaje: Mensaje) => {
+  const mensajesFiltrados = mensajes.filter(mensaje => {
     const matchTipo = !filtroTipo || mensaje.tipo === filtroTipo;
     const matchBusqueda = !busqueda || 
       mensaje.asunto.toLowerCase().includes(busqueda.toLowerCase()) ||
-      mensaje.mensaje.toLowerCase().includes(busqueda.toLowerCase()) ||
-      mensaje.nombre_usuario.toLowerCase().includes(busqueda.toLowerCase()) ||
-      mensaje.email.toLowerCase().includes(busqueda.toLowerCase());
+      mensaje.mensaje.toLowerCase().includes(busqueda.toLowerCase());
     return matchTipo && matchBusqueda;
   });
-
-  if (user?.rol !== 'admin') {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600 dark:text-red-400 text-lg">
-          No tienes permisos para acceder a esta página.
-        </p>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -171,8 +113,12 @@ const Mensajes: React.FC = () => {
   return (
     <div className="px-4 sm:px-0">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
-        Mensajes de Contacto
+        Mis Comunicados
       </h1>
+
+      <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
+        Aquí puedes ver todos tus mensajes enviados y las respuestas del administrador
+      </p>
 
       {/* Filtros */}
       <div className="mb-6 p-4">
@@ -204,7 +150,7 @@ const Mensajes: React.FC = () => {
               id="busqueda"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar por asunto, mensaje, usuario o email..."
+              placeholder="Buscar por asunto o mensaje..."
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
@@ -222,7 +168,7 @@ const Mensajes: React.FC = () => {
       {mensajesFiltrados.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-[#1e2124] rounded-lg border border-gray-200 dark:border-gray-600">
           <p className="text-gray-600 dark:text-gray-400">
-            {mensajes.length === 0 ? 'No hay mensajes de contacto' : 'No se encontraron mensajes con los filtros aplicados'}
+            {mensajes.length === 0 ? 'No has enviado ningún mensaje aún' : 'No se encontraron mensajes con los filtros aplicados'}
           </p>
         </div>
       ) : (
@@ -231,7 +177,7 @@ const Mensajes: React.FC = () => {
             <div
               key={mensaje.id}
               className="bg-white dark:bg-[#1e2124] rounded-lg border border-gray-200 dark:border-gray-600 p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleOpenMessage(mensaje)}
+              onClick={() => setSelectedMensaje(mensaje)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -244,6 +190,11 @@ const Mensajes: React.FC = () => {
                         Resuelto
                       </span>
                     )}
+                    {mensaje.solucion && (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                        Con respuesta
+                      </span>
+                    )}
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                       {mensaje.asunto}
                     </h3>
@@ -252,9 +203,6 @@ const Mensajes: React.FC = () => {
                     {mensaje.mensaje}
                   </p>
                   <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                    <span>
-                      <strong>Usuario:</strong> {mensaje.nombre_usuario} ({mensaje.email})
-                    </span>
                     <span>
                       <strong>Fecha:</strong> {formatFecha(mensaje.fecha)}
                     </span>
@@ -274,27 +222,14 @@ const Mensajes: React.FC = () => {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Detalle del Mensaje
               </h2>
-              <div className="flex items-center gap-2">
-                {!editando && (
-                  <button
-                    onClick={() => setEditando(true)}
-                    className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700"
-                  >
-                    Editar
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    setSelectedMensaje(null);
-                    setEditando(false);
-                  }}
-                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+              <button
+                onClick={() => setSelectedMensaje(null)}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -316,109 +251,53 @@ const Mensajes: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Mensaje
+                  Tu Mensaje
                 </label>
-                <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{selectedMensaje.mensaje}</p>
+                <p className="text-gray-900 dark:text-white whitespace-pre-wrap bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                  {selectedMensaje.mensaje}
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Usuario
-                  </label>
-                  <p className="text-gray-900 dark:text-white">{selectedMensaje.nombre_usuario}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email
-                  </label>
-                  <p className="text-gray-900 dark:text-white">{selectedMensaje.email}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Fecha
-                  </label>
-                  <p className="text-gray-900 dark:text-white">{formatFecha(selectedMensaje.fecha)}</p>
-                </div>
-
-                {selectedMensaje.ip_address && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      IP Address
-                    </label>
-                    <p className="text-gray-900 dark:text-white">{selectedMensaje.ip_address}</p>
-                  </div>
-                )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Fecha de envío
+                </label>
+                <p className="text-gray-900 dark:text-white">{formatFecha(selectedMensaje.fecha)}</p>
               </div>
 
-              {selectedMensaje.user_agent && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    User Agent
-                  </label>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 break-all">{selectedMensaje.user_agent}</p>
-                </div>
-              )}
-
-              {/* Estado y Solución */}
+              {/* Respuesta del Admin */}
               <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
-                <div className="mb-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={isDone}
-                      onChange={(e) => setIsDone(e.target.checked)}
-                      disabled={!editando}
-                      className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                    />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Marcado como resuelto
-                    </span>
-                  </label>
-                </div>
-
-                <div>
+                <div className="mb-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Solución / Comentario
+                    Estado
                   </label>
-                  {editando ? (
-                    <textarea
-                      value={solucion}
-                      onChange={(e) => setSolucion(e.target.value)}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="Escribe la solución o comentario aquí..."
-                    />
+                  {selectedMensaje.is_done ? (
+                    <span className="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                      ✓ Resuelto
+                    </span>
                   ) : (
-                    <p className="text-gray-900 dark:text-white whitespace-pre-wrap min-h-[60px]">
-                      {selectedMensaje.solucion || 'Sin solución registrada'}
-                    </p>
+                    <span className="inline-block px-2 py-1 rounded text-sm font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                      En revisión
+                    </span>
                   )}
                 </div>
 
-                {editando && (
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={handleSaveMessage}
-                      disabled={guardando}
-                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {guardando ? 'Guardando...' : 'Guardar'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditando(false);
-                        setIsDone(selectedMensaje.is_done);
-                        setSolucion(selectedMensaje.solucion || '');
-                      }}
-                      className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Respuesta del Administrador
+                  </label>
+                  {selectedMensaje.solucion ? (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
+                      <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+                        {selectedMensaje.solucion}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400 italic">
+                      Aún no hay respuesta del administrador. Te notificaremos cuando haya una respuesta.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -428,5 +307,5 @@ const Mensajes: React.FC = () => {
   );
 };
 
-export default Mensajes;
+export default Comunicados;
 

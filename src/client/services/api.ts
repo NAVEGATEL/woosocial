@@ -442,6 +442,8 @@ class ApiService {
     ip_address: string | null;
     user_agent: string | null;
     fecha: string;
+    is_done: boolean;
+    solucion: string | null;
     nombre_usuario: string;
     email: string;
   }> }> {
@@ -454,9 +456,51 @@ class ApiService {
       ip_address: string | null;
       user_agent: string | null;
       fecha: string;
+      is_done: boolean;
+      solucion: string | null;
       nombre_usuario: string;
       email: string;
     }> }>('/admin/messages');
+  }
+
+  async updateMessage(messageId: number, data: {
+    is_done?: boolean;
+    solucion?: string;
+  }): Promise<{ message: string; mensaje: any }> {
+    return this.request<{ message: string; mensaje: any }>(`/admin/messages/${messageId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getUserMessages(): Promise<{ messages: Array<{
+    id: number;
+    id_usuario: number | null;
+    tipo: 'consulta' | 'soporte' | 'sugerencia' | 'error' | 'otro';
+    asunto: string;
+    mensaje: string;
+    ip_address: string | null;
+    user_agent: string | null;
+    fecha: string;
+    is_done: boolean;
+    solucion: string | null;
+    nombre_usuario: string;
+    email: string;
+  }> }> {
+    return this.request<{ messages: Array<{
+      id: number;
+      id_usuario: number | null;
+      tipo: 'consulta' | 'soporte' | 'sugerencia' | 'error' | 'otro';
+      asunto: string;
+      mensaje: string;
+      ip_address: string | null;
+      user_agent: string | null;
+      fecha: string;
+      is_done: boolean;
+      solucion: string | null;
+      nombre_usuario: string;
+      email: string;
+    }> }>('/users/messages');
   }
 
   // WooCommerce

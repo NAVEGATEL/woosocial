@@ -11,6 +11,7 @@ import Transacciones from './pages/Transacciones';
 import Generaciones from './pages/Generaciones';
 import Publicaciones from './pages/Publicaciones';
 import Mensajes from './pages/Mensajes';
+import Comunicados from './pages/Comunicados';
 
 const AppContent: React.FC = () => {
   const { loading } = useAuth();
@@ -96,6 +97,15 @@ const AppContent: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Mensajes />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/comunicados" 
+              element={
+                <ProtectedRoute>
+                  <Comunicados />
                 </ProtectedRoute>
               } 
             />

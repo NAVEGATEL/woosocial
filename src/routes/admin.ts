@@ -357,7 +357,7 @@ router.put('/users/:id/preferences', updatePreferenciasValidation, async (req: A
         cliente_key: updateData.cliente_key || '',
         url_tienda: updateData.url_tienda || '',
         cliente_secret: updateData.cliente_secret || '',
-        n8n_webhook: updateData.n8n_webhook,
+        n8n_webhook: updateData.n8n_webhook || '',
         n8n_redes: updateData.n8n_redes
       };
       
@@ -458,6 +458,8 @@ router.get('/messages', async (req: AuthRequest, res: Response) => {
         l.ip_address,
         l.user_agent,
         l.fecha,
+        l.is_done,
+        l.solucion,
         u.nombre_usuario,
         u.email
       FROM logs_sistema l
@@ -483,6 +485,8 @@ router.get('/messages', async (req: AuthRequest, res: Response) => {
         ip_address: row.ip_address,
         user_agent: row.user_agent,
         fecha: row.fecha,
+        is_done: row.is_done || false,
+        solucion: row.solucion || null,
         nombre_usuario: row.nombre_usuario || 'Usuario eliminado',
         email: row.email || 'N/A'
       };
@@ -493,6 +497,111 @@ router.get('/messages', async (req: AuthRequest, res: Response) => {
     console.error('Error al obtener mensajes:', error);
     res.status(500).json({ 
       error: error.message || 'Error al obtener mensajes'
+    });
+  }
+});
+
+// PUT /api/admin/messages/:id - Actualizar estado y solución de un mensaje (solo admin)
+router.put('/messages/:id', [
+  body('is_done').optional().isBoolean().withMessage('is_done debe ser un booleano'),
+  body('solucion').optional().isString().withMessage('solucion debe ser un string')
+], async (req: AuthRequest, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: 'Datos de validación incorrectos',
+        details: errors.array()
+      });
+    }
+
+    const messageId = parseInt(req.params.id);
+    if (isNaN(messageId)) {
+      return res.status(400).json({ error: 'ID de mensaje inválido' });
+    }
+
+    const { is_done, solucion } = req.body;
+
+    // Construir la consulta SQL dinámicamente
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (is_done !== undefined) {
+      updates.push('is_done = ?');
+      params.push(is_done);
+    }
+
+    if (solucion !== undefined) {
+      updates.push('solucion = ?');
+      params.push(solucion);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No se proporcionaron campos para actualizar' });
+    }
+
+    params.push(messageId);
+
+    const sql = `
+      UPDATE logs_sistema 
+      SET ${updates.join(', ')}
+      WHERE id = ? AND accion IN ('consulta', 'soporte', 'sugerencia', 'error', 'otro')
+    `;
+
+    const [result] = await db.execute(sql, params) as any[];
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Mensaje no encontrado' });
+    }
+
+    // Obtener el mensaje actualizado
+    const [updatedRows] = await db.execute(`
+      SELECT 
+        l.id,
+        l.id_usuario,
+        l.accion as tipo,
+        l.descripcion,
+        l.ip_address,
+        l.user_agent,
+        l.fecha,
+        l.is_done,
+        l.solucion,
+        u.nombre_usuario,
+        u.email
+      FROM logs_sistema l
+      LEFT JOIN users u ON l.id_usuario = u.id
+      WHERE l.id = ?
+    `, [messageId]) as any[];
+
+    const row = updatedRows[0];
+    const descripcion = row.descripcion || '';
+    const parts = descripcion.split(':');
+    const asunto = parts[0] || '';
+    const mensaje = parts.slice(1).join(':') || '';
+
+    const updatedMessage = {
+      id: row.id,
+      id_usuario: row.id_usuario,
+      tipo: row.tipo,
+      asunto,
+      mensaje,
+      ip_address: row.ip_address,
+      user_agent: row.user_agent,
+      fecha: row.fecha,
+      is_done: row.is_done || false,
+      solucion: row.solucion || null,
+      nombre_usuario: row.nombre_usuario || 'Usuario eliminado',
+      email: row.email || 'N/A'
+    };
+
+    res.json({
+      message: 'Mensaje actualizado exitosamente',
+      mensaje: updatedMessage
+    });
+  } catch (error: any) {
+    console.error('Error al actualizar mensaje:', error);
+    res.status(500).json({ 
+      error: error.message || 'Error al actualizar mensaje'
     });
   }
 });

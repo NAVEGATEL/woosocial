@@ -188,6 +188,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     >
                       Publicaciones
                     </Link>
+                    <Link
+                      to="/comunicados"
+                      ref={(el) => (linkRefs.current['/comunicados'] = el)}
+                      className={`px-3 py-2 text-sm font-medium ${
+                        isActive('/comunicados') 
+                          ? 'text-gray-900 dark:text-white' 
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Comunicados
+                    </Link>
                   </>
                 )}
                 {user.rol === 'admin' && (
@@ -341,7 +352,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     to="/generaciones"
                     onClick={() => setIsMenuOpen(false)}
                     className={`px-4 py-3 text-base font-medium ${
-                      isActive('/generaciones') 
+                      isActive('/generaciones')
                       ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
                     }`}
@@ -352,12 +363,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     to="/publicaciones"
                     onClick={() => setIsMenuOpen(false)}
                     className={`px-4 py-3 text-base font-medium ${
-                      isActive('/publicaciones') 
+                      isActive('/publicaciones')
                       ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
                     }`}
                   >
                     Publicaciones
+                  </Link>
+                  <Link
+                    to="/comunicados"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`px-4 py-3 text-base font-medium ${
+                      isActive('/comunicados')
+                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    Comunicados
                   </Link>
                 </>
               )}
