@@ -4,13 +4,14 @@ import { AuthProvider, useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Preferencias from './pages/Preferencias';
 import AdminUsers from './pages/AdminUsers';
 import Transacciones from './pages/Transacciones';
 import Generaciones from './pages/Generaciones';
 import Publicaciones from './pages/Publicaciones';
+import Mensajes from './pages/Mensajes';
+import Comunicados from './pages/Comunicados';
 
 const AppContent: React.FC = () => {
   const { loading } = useAuth();
@@ -32,7 +33,6 @@ const AppContent: React.FC = () => {
         <Routes>
             {/* Rutas públicas */}
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
             
             {/* Ruta raíz - redirigir a dashboard si está autenticado, sino a login */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -88,6 +88,24 @@ const AppContent: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <AdminUsers />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/mensajes" 
+              element={
+                <ProtectedRoute>
+                  <Mensajes />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/comunicados" 
+              element={
+                <ProtectedRoute>
+                  <Comunicados />
                 </ProtectedRoute>
               } 
             />

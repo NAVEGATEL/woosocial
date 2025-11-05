@@ -219,9 +219,9 @@ export const initDatabase = async (): Promise<void> => {
         CREATE TABLE IF NOT EXISTS preferencias_usuario (
           id INT AUTO_INCREMENT PRIMARY KEY,
           id_usuario INT NOT NULL UNIQUE,
-          cliente_key VARCHAR(255) NOT NULL,
+          cliente_key TEXT NOT NULL,
           url_tienda VARCHAR(500) NOT NULL,
-          cliente_secret VARCHAR(255) NOT NULL,
+          cliente_secret TEXT NOT NULL,
           n8n_webhook VARCHAR(500) NULL,
           fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

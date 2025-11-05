@@ -31,19 +31,23 @@ COLLATE utf8mb4_unicode_ci;
 -- Usar la base de datos
 USE token_system;
 
+-- Configurar codificación UTF-8 para asegurar que los caracteres especiales se lean correctamente
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
 -- =============================================
 -- Tabla: users
 -- Almacena información de los usuarios del sistema
 -- =============================================
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_usuario VARCHAR(50) NOT NULL UNIQUE COMMENT 'Nombre de usuario único',
-    email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Email único del usuario',
-    contraseña_encriptada VARCHAR(255) NOT NULL COMMENT 'Contraseña hasheada con bcrypt',
+    nombre_usuario VARCHAR(50) NOT NULL UNIQUE COMMENT 'Nombre de usuario unico',
+    email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Email unico del usuario',
+    contraseña_encriptada VARCHAR(255) NOT NULL COMMENT 'Contrasena hasheada con bcrypt',
     puntos INT DEFAULT 0 COMMENT 'Balance actual de puntos/tokens',
     rol ENUM('admin', 'usuario', 'moderador') DEFAULT 'usuario' COMMENT 'Rol del usuario en el sistema',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha de registro del usuario',
-    ultimo_login TIMESTAMP NULL COMMENT 'Último acceso del usuario',
+    ultimo_login TIMESTAMP NULL COMMENT 'Ultimo acceso del usuario',
     
     -- Índices para mejorar el rendimiento
     INDEX idx_users_email (email),
@@ -81,9 +85,9 @@ CREATE TABLE IF NOT EXISTS transacciones (
 CREATE TABLE IF NOT EXISTS preferencias_usuario (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL UNIQUE COMMENT 'ID del usuario (relación 1:1)',
-    cliente_key VARCHAR(255) NOT NULL COMMENT 'Consumer Key de WooCommerce',
+    cliente_key TEXT NOT NULL COMMENT 'Consumer Key de WooCommerce (cifrado)',
     url_tienda VARCHAR(500) NOT NULL COMMENT 'URL de la tienda WooCommerce',
-    cliente_secret VARCHAR(255) NOT NULL COMMENT 'Consumer Secret de WooCommerce',
+    cliente_secret TEXT NOT NULL COMMENT 'Consumer Secret de WooCommerce (cifrado)',
     n8n_webhook VARCHAR(500) NULL COMMENT 'URL del webhook de N8N (opcional)',
     n8n_redes VARCHAR(500) NULL COMMENT 'URL del webhook de N8N para redes sociales (opcional)',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha de creación de las preferencias',
@@ -161,6 +165,8 @@ CREATE TABLE IF NOT EXISTS logs_sistema (
     descripcion TEXT COMMENT 'Descripción detallada de la acción',
     ip_address VARCHAR(45) COMMENT 'Dirección IP del usuario',
     user_agent TEXT COMMENT 'User Agent del navegador',
+    is_done BOOLEAN DEFAULT FALSE COMMENT 'Si el problema ha sido resuelto',
+    solucion TEXT COMMENT 'Solución encontrada para el problema',
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha y hora del log',
     
     -- Clave foránea opcional

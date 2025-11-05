@@ -2,9 +2,12 @@ import { Router, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { UserService } from '../services/userService';
 import { PreferenciasService } from '../services/preferenciasService';
+import { SocialMediaService } from '../services/socialMediaService';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 import { CreateUserData, UpdateUserData } from '../models/User';
 import { CreatePreferenciasData, UpdatePreferenciasData } from '../models/PreferenciasUsuario';
+import { UpsertSocialCredentialRequest, SocialPlatformId } from '../models/SocialMedia';
+import { db } from '../database/connection';
 
 const router = Router();
 
@@ -41,13 +44,31 @@ const createPreferenciasValidation = [
     .notEmpty()
     .withMessage('El cliente_secret es requerido'),
   body('n8n_webhook')
-    .optional()
-    .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
-    .withMessage('El webhook de N8N debe ser una URL válida'),
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      if (!value || value.trim() === '') {
+        return true; // Permitir valores vacíos
+      }
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        throw new Error('El webhook de N8N debe ser una URL válida');
+      }
+    }),
   body('n8n_redes')
-    .optional()
-    .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
-    .withMessage('El webhook de N8N para redes sociales debe ser una URL válida')
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      if (!value || value.trim() === '') {
+        return true; // Permitir valores vacíos
+      }
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        throw new Error('El webhook de N8N para redes sociales debe ser una URL válida');
+      }
+    })
 ];
 
 // POST /api/admin/users - Crear usuario simple
@@ -251,13 +272,31 @@ const updatePreferenciasValidation = [
     .notEmpty()
     .withMessage('El cliente_secret no puede estar vacío'),
   body('n8n_webhook')
-    .optional()
-    .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
-    .withMessage('El webhook de N8N debe ser una URL válida'),
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      if (!value || value.trim() === '') {
+        return true; // Permitir valores vacíos
+      }
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        throw new Error('El webhook de N8N debe ser una URL válida');
+      }
+    }),
   body('n8n_redes')
-    .optional()
-    .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
-    .withMessage('El webhook de N8N para redes sociales debe ser una URL válida')
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      if (!value || value.trim() === '') {
+        return true; // Permitir valores vacíos
+      }
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        throw new Error('El webhook de N8N para redes sociales debe ser una URL válida');
+      }
+    })
 ];
 
 // PUT /api/admin/users/:id - Actualizar usuario (solo admin)
@@ -344,9 +383,25 @@ router.put('/users/:id/preferences', updatePreferenciasValidation, async (req: A
       }
     });
 
-    const preferencias = await PreferenciasService.updatePreferencias(userId, updateData);
+    // Intentar actualizar, si no existen, crear nuevas
+    let preferencias = await PreferenciasService.updatePreferencias(userId, updateData);
+    
     if (!preferencias) {
-      return res.status(404).json({ error: 'Preferencias no encontradas' });
+      // Si no existen, crear nuevas preferencias
+      const createData: CreatePreferenciasData = {
+        id_usuario: userId,
+        cliente_key: updateData.cliente_key || '',
+        url_tienda: updateData.url_tienda || '',
+        cliente_secret: updateData.cliente_secret || '',
+        n8n_webhook: updateData.n8n_webhook || '',
+        n8n_redes: updateData.n8n_redes
+      };
+      
+      const created = await PreferenciasService.createPreferencias(createData);
+      return res.json({
+        message: 'Preferencias creadas exitosamente',
+        preferencias: created
+      });
     }
 
     res.json({
@@ -368,6 +423,12 @@ router.get('/users/:id/preferences', async (req: AuthRequest, res: Response) => 
       return res.status(400).json({ error: 'ID de usuario inválido' });
     }
 
+    // Verificar que el usuario existe primero
+    const user = await UserService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
     const preferencias = await PreferenciasService.getPreferenciasByUserId(userId);
     if (!preferencias) {
       return res.status(404).json({ error: 'Preferencias no encontradas' });
@@ -375,8 +436,297 @@ router.get('/users/:id/preferences', async (req: AuthRequest, res: Response) => 
 
     res.json({ preferencias });
   } catch (error: any) {
+    console.error('Error al obtener preferencias:', error);
     res.status(500).json({ 
       error: error.message || 'Error al obtener preferencias'
+    });
+  }
+});
+
+// POST /api/admin/users/:id/preferences - Crear preferencias para un usuario (solo admin)
+router.post('/users/:id/preferences', createPreferenciasValidation, async (req: AuthRequest, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: 'Datos de validación incorrectos',
+        details: errors.array()
+      });
+    }
+
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'ID de usuario inválido' });
+    }
+
+    // Verificar que el usuario existe
+    const user = await UserService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Normalizar valores vacíos a undefined/null
+    const preferenciasData: CreatePreferenciasData = {
+      id_usuario: userId,
+      cliente_key: req.body.cliente_key,
+      url_tienda: req.body.url_tienda,
+      cliente_secret: req.body.cliente_secret,
+      n8n_webhook: req.body.n8n_webhook && req.body.n8n_webhook.trim() !== '' ? req.body.n8n_webhook : '',
+      n8n_redes: req.body.n8n_redes && req.body.n8n_redes.trim() !== '' ? req.body.n8n_redes : undefined
+    };
+
+    const preferencias = await PreferenciasService.createPreferencias(preferenciasData);
+
+    res.status(201).json({
+      message: 'Preferencias creadas exitosamente',
+      preferencias
+    });
+  } catch (error: any) {
+    console.error('Error al crear preferencias:', error);
+    res.status(500).json({ 
+      error: error.message || 'Error al crear preferencias'
+    });
+  }
+});
+
+// GET /api/admin/messages - Obtener mensajes de contacto (solo admin)
+router.get('/messages', async (req: AuthRequest, res: Response) => {
+  try {
+    // Obtener mensajes de contacto desde logs_sistema
+    // Los mensajes de contacto tienen accion en ['consulta', 'soporte', 'sugerencia', 'error', 'otro']
+    const sql = `
+      SELECT 
+        l.id,
+        l.id_usuario,
+        l.accion as tipo,
+        l.descripcion,
+        l.ip_address,
+        l.user_agent,
+        l.fecha,
+        l.is_done,
+        l.solucion,
+        u.nombre_usuario,
+        u.email
+      FROM logs_sistema l
+      LEFT JOIN users u ON l.id_usuario = u.id
+      WHERE l.accion IN ('consulta', 'soporte', 'sugerencia', 'error', 'otro')
+      ORDER BY l.fecha DESC
+    `;
+
+    const [rows] = await db.execute(sql);
+    const messages = (rows as any[]).map(row => {
+      // Parsear descripcion que tiene formato "asunto:mensaje"
+      const descripcion = row.descripcion || '';
+      const parts = descripcion.split(':');
+      const asunto = parts[0] || '';
+      const mensaje = parts.slice(1).join(':') || '';
+
+      return {
+        id: row.id,
+        id_usuario: row.id_usuario,
+        tipo: row.tipo,
+        asunto,
+        mensaje,
+        ip_address: row.ip_address,
+        user_agent: row.user_agent,
+        fecha: row.fecha,
+        is_done: row.is_done || false,
+        solucion: row.solucion || null,
+        nombre_usuario: row.nombre_usuario || 'Usuario eliminado',
+        email: row.email || 'N/A'
+      };
+    });
+
+    res.json({ messages });
+  } catch (error: any) {
+    console.error('Error al obtener mensajes:', error);
+    res.status(500).json({ 
+      error: error.message || 'Error al obtener mensajes'
+    });
+  }
+});
+
+// PUT /api/admin/messages/:id - Actualizar estado y solución de un mensaje (solo admin)
+router.put('/messages/:id', [
+  body('is_done').optional().isBoolean().withMessage('is_done debe ser un booleano'),
+  body('solucion').optional().isString().withMessage('solucion debe ser un string')
+], async (req: AuthRequest, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: 'Datos de validación incorrectos',
+        details: errors.array()
+      });
+    }
+
+    const messageId = parseInt(req.params.id);
+    if (isNaN(messageId)) {
+      return res.status(400).json({ error: 'ID de mensaje inválido' });
+    }
+
+    const { is_done, solucion } = req.body;
+
+    // Construir la consulta SQL dinámicamente
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (is_done !== undefined) {
+      updates.push('is_done = ?');
+      params.push(is_done);
+    }
+
+    if (solucion !== undefined) {
+      updates.push('solucion = ?');
+      params.push(solucion);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No se proporcionaron campos para actualizar' });
+    }
+
+    params.push(messageId);
+
+    const sql = `
+      UPDATE logs_sistema 
+      SET ${updates.join(', ')}
+      WHERE id = ? AND accion IN ('consulta', 'soporte', 'sugerencia', 'error', 'otro')
+    `;
+
+    const [result] = await db.execute(sql, params) as any[];
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Mensaje no encontrado' });
+    }
+
+    // Obtener el mensaje actualizado
+    const [updatedRows] = await db.execute(`
+      SELECT 
+        l.id,
+        l.id_usuario,
+        l.accion as tipo,
+        l.descripcion,
+        l.ip_address,
+        l.user_agent,
+        l.fecha,
+        l.is_done,
+        l.solucion,
+        u.nombre_usuario,
+        u.email
+      FROM logs_sistema l
+      LEFT JOIN users u ON l.id_usuario = u.id
+      WHERE l.id = ?
+    `, [messageId]) as any[];
+
+    const row = updatedRows[0];
+    const descripcion = row.descripcion || '';
+    const parts = descripcion.split(':');
+    const asunto = parts[0] || '';
+    const mensaje = parts.slice(1).join(':') || '';
+
+    const updatedMessage = {
+      id: row.id,
+      id_usuario: row.id_usuario,
+      tipo: row.tipo,
+      asunto,
+      mensaje,
+      ip_address: row.ip_address,
+      user_agent: row.user_agent,
+      fecha: row.fecha,
+      is_done: row.is_done || false,
+      solucion: row.solucion || null,
+      nombre_usuario: row.nombre_usuario || 'Usuario eliminado',
+      email: row.email || 'N/A'
+    };
+
+    res.json({
+      message: 'Mensaje actualizado exitosamente',
+      mensaje: updatedMessage
+    });
+  } catch (error: any) {
+    console.error('Error al actualizar mensaje:', error);
+    res.status(500).json({ 
+      error: error.message || 'Error al actualizar mensaje'
+    });
+  }
+});
+
+// GET /api/admin/users/:id/social - Obtener credenciales de redes sociales de un usuario (solo admin)
+router.get('/users/:id/social', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'ID de usuario inválido' });
+    }
+
+    const credentials = await SocialMediaService.listConnectionsByUser(userId);
+    res.json({ credentials });
+  } catch (error: any) {
+    res.status(500).json({ 
+      error: error.message || 'Error al obtener credenciales de redes sociales'
+    });
+  }
+});
+
+// PUT /api/admin/users/:id/social/:plataforma - Actualizar credenciales de redes sociales (solo admin)
+router.put('/users/:id/social/:plataforma', [
+  body('account_id').optional().isString(),
+  body('is_active').optional().isBoolean(),
+  body('access_token').optional().isString(),
+  body('username').optional().isString(),
+], async (req: AuthRequest, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: 'Datos de validación incorrectos',
+        details: errors.array()
+      });
+    }
+
+    const userId = parseInt(req.params.id);
+    const plataforma = req.params.plataforma as SocialPlatformId;
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'ID de usuario inválido' });
+    }
+
+    const validPlatforms: SocialPlatformId[] = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'linkedin', 'pinterest'];
+    if (!validPlatforms.includes(plataforma)) {
+      return res.status(400).json({ error: 'Plataforma inválida' });
+    }
+
+    // Verificar que el usuario existe
+    const user = await UserService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Actualizar o crear credencial
+    const updateData: UpsertSocialCredentialRequest = {
+      plataforma,
+      account_id: req.body.account_id,
+      access_token: req.body.access_token,
+      username: req.body.username,
+      is_active: req.body.is_active,
+    };
+
+    // Eliminar campos undefined
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key as keyof UpsertSocialCredentialRequest] === undefined) {
+        delete updateData[key as keyof UpsertSocialCredentialRequest];
+      }
+    });
+
+    const credential = await SocialMediaService.upsertCredential(userId, updateData);
+
+    res.json({
+      message: 'Credencial actualizada exitosamente',
+      credential
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      error: error.message || 'Error al actualizar credenciales de redes sociales'
     });
   }
 });

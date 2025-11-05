@@ -53,15 +53,62 @@ fi
 echo "✓ MySQL está listo"
 echo "Ejecutando script de inicialización..."
 
-# Ejecutar el script SQL con codificación UTF-8
-# Usar --force para continuar aunque haya warnings (por ejemplo, si las tablas ya existen)
-if mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" \
+# Configurar variables de entorno para UTF-8
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+
+# Crear un script temporal con configuración UTF-8
+TMP_SQL="/tmp/init-db-utf8.sql"
+
+# Copiar el archivo SQL y asegurar codificación UTF-8
+# Intentar convertir desde diferentes codificaciones comunes a UTF-8
+if command -v iconv >/dev/null 2>&1; then
+  # Intentar diferentes codificaciones de origen comunes
+  for encoding in UTF-8 ISO-8859-1 Windows-1252; do
+    if iconv -f "$encoding" -t UTF-8 /scripts/init-db.sql > "$TMP_SQL" 2>/dev/null; then
+      # Verificar que el archivo convertido no esté vacío y contenga caracteres válidos
+      if [ -s "$TMP_SQL" ] && grep -q "contraseña_encriptada" "$TMP_SQL" 2>/dev/null; then
+        break
+      fi
+    fi
+  done
+  # Si ninguna conversión funcionó, usar el archivo original
+  if [ ! -f "$TMP_SQL" ] || [ ! -s "$TMP_SQL" ]; then
+    cp /scripts/init-db.sql "$TMP_SQL"
+  fi
+else
+  cp /scripts/init-db.sql "$TMP_SQL"
+fi
+
+# Ejecutar el script SQL con codificación UTF-8 explícita
+# Primero configurar MySQL para usar UTF-8, luego ejecutar el script
+{
+  echo "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;"
+  echo "SET CHARACTER SET utf8mb4;"
+  cat "$TMP_SQL"
+} | mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" \
   --default-character-set=utf8mb4 \
   --force \
-  < /scripts/init-db.sql 2>&1 | grep -v "^Warning" | grep -v "^$" || true; then
+  2>&1 | while IFS= read -r line || [ -n "$line" ]; do
+    # Filtrar warnings y líneas vacías, pero mostrar errores
+    if [[ ! "$line" =~ ^Warning ]] && [[ ! "$line" =~ ^mysql:.*Warning ]] && [[ ! -z "$line" ]]; then
+      echo "$line"
+    fi
+  done
+
+# Capturar el código de salida de mysql
+mysql_exit_code=${PIPESTATUS[0]}
+
+# Limpiar archivo temporal
+rm -f "$TMP_SQL"
+
+# Verificar resultado
+if [ $mysql_exit_code -eq 0 ]; then
   echo "✓ Script de inicialización ejecutado correctamente"
 else
-  echo "⚠ Advertencia: Algunos comandos SQL pueden haber fallado (normal si las tablas ya existen)"
+  echo "⚠ Error al ejecutar el script SQL (código: $mysql_exit_code)"
+  echo "Revisa los logs anteriores para más detalles"
+  exit $mysql_exit_code
 fi
 
 echo "=========================================="

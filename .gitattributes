@@ -1,7 +1,7 @@
 # Asegurar que los scripts bash tengan finales de línea LF (Linux/Unix)
 *.sh text eol=lf
 
-# Scripts SQL también deberían usar LF
+# Scripts SQL también deberían usar LF (UTF-8 se maneja automáticamente)
 *.sql text eol=lf
 
 # Archivos de configuración

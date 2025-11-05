@@ -25,6 +25,7 @@ export interface UpsertSocialCredentialRequest {
   app_secret?: string;
   username?: string;
   account_id?: string;
+  is_active?: boolean;
 }
 
 export interface SocialConnectionsResponse {

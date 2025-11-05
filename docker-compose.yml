@@ -58,6 +58,8 @@ services:
       - DB_HOST=mysql
       - DB_USER=root
       - DB_PASSWORD=navega
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
     volumes:
       - ./scripts/init-db.sql:/scripts/init-db.sql:ro
       - ./scripts/init-db-wrapper.sh:/scripts/init-db-wrapper.sh:ro
