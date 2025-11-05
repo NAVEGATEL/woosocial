@@ -85,9 +85,9 @@ CREATE TABLE IF NOT EXISTS transacciones (
 CREATE TABLE IF NOT EXISTS preferencias_usuario (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL UNIQUE COMMENT 'ID del usuario (relación 1:1)',
-    cliente_key VARCHAR(255) NOT NULL COMMENT 'Consumer Key de WooCommerce',
+    cliente_key TEXT NOT NULL COMMENT 'Consumer Key de WooCommerce (cifrado)',
     url_tienda VARCHAR(500) NOT NULL COMMENT 'URL de la tienda WooCommerce',
-    cliente_secret VARCHAR(255) NOT NULL COMMENT 'Consumer Secret de WooCommerce',
+    cliente_secret TEXT NOT NULL COMMENT 'Consumer Secret de WooCommerce (cifrado)',
     n8n_webhook VARCHAR(500) NULL COMMENT 'URL del webhook de N8N (opcional)',
     n8n_redes VARCHAR(500) NULL COMMENT 'URL del webhook de N8N para redes sociales (opcional)',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha de creación de las preferencias',

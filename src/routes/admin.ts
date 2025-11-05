@@ -44,13 +44,31 @@ const createPreferenciasValidation = [
     .notEmpty()
     .withMessage('El cliente_secret es requerido'),
   body('n8n_webhook')
-    .optional()
-    .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
-    .withMessage('El webhook de N8N debe ser una URL válida'),
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      if (!value || value.trim() === '') {
+        return true; // Permitir valores vacíos
+      }
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        throw new Error('El webhook de N8N debe ser una URL válida');
+      }
+    }),
   body('n8n_redes')
-    .optional()
-    .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
-    .withMessage('El webhook de N8N para redes sociales debe ser una URL válida')
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      if (!value || value.trim() === '') {
+        return true; // Permitir valores vacíos
+      }
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        throw new Error('El webhook de N8N para redes sociales debe ser una URL válida');
+      }
+    })
 ];
 
 // POST /api/admin/users - Crear usuario simple
@@ -254,13 +272,31 @@ const updatePreferenciasValidation = [
     .notEmpty()
     .withMessage('El cliente_secret no puede estar vacío'),
   body('n8n_webhook')
-    .optional()
-    .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
-    .withMessage('El webhook de N8N debe ser una URL válida'),
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      if (!value || value.trim() === '') {
+        return true; // Permitir valores vacíos
+      }
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        throw new Error('El webhook de N8N debe ser una URL válida');
+      }
+    }),
   body('n8n_redes')
-    .optional()
-    .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
-    .withMessage('El webhook de N8N para redes sociales debe ser una URL válida')
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      if (!value || value.trim() === '') {
+        return true; // Permitir valores vacíos
+      }
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        throw new Error('El webhook de N8N para redes sociales debe ser una URL válida');
+      }
+    })
 ];
 
 // PUT /api/admin/users/:id - Actualizar usuario (solo admin)
@@ -387,6 +423,12 @@ router.get('/users/:id/preferences', async (req: AuthRequest, res: Response) => 
       return res.status(400).json({ error: 'ID de usuario inválido' });
     }
 
+    // Verificar que el usuario existe primero
+    const user = await UserService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
     const preferencias = await PreferenciasService.getPreferenciasByUserId(userId);
     if (!preferencias) {
       return res.status(404).json({ error: 'Preferencias no encontradas' });
@@ -394,6 +436,7 @@ router.get('/users/:id/preferences', async (req: AuthRequest, res: Response) => 
 
     res.json({ preferencias });
   } catch (error: any) {
+    console.error('Error al obtener preferencias:', error);
     res.status(500).json({ 
       error: error.message || 'Error al obtener preferencias'
     });
@@ -422,13 +465,14 @@ router.post('/users/:id/preferences', createPreferenciasValidation, async (req: 
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
+    // Normalizar valores vacíos a undefined/null
     const preferenciasData: CreatePreferenciasData = {
       id_usuario: userId,
       cliente_key: req.body.cliente_key,
       url_tienda: req.body.url_tienda,
       cliente_secret: req.body.cliente_secret,
-      n8n_webhook: req.body.n8n_webhook,
-      n8n_redes: req.body.n8n_redes
+      n8n_webhook: req.body.n8n_webhook && req.body.n8n_webhook.trim() !== '' ? req.body.n8n_webhook : '',
+      n8n_redes: req.body.n8n_redes && req.body.n8n_redes.trim() !== '' ? req.body.n8n_redes : undefined
     };
 
     const preferencias = await PreferenciasService.createPreferencias(preferenciasData);
@@ -438,6 +482,7 @@ router.post('/users/:id/preferences', createPreferenciasValidation, async (req: 
       preferencias
     });
   } catch (error: any) {
+    console.error('Error al crear preferencias:', error);
     res.status(500).json({ 
       error: error.message || 'Error al crear preferencias'
     });

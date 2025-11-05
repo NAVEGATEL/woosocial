@@ -1,6 +1,7 @@
 import { db } from '../database/connection';
 import { PreferenciasUsuario, CreatePreferenciasData, UpdatePreferenciasData, PreferenciasResponse } from '../models/PreferenciasUsuario';
 import { UserService } from './userService';
+import { encrypt, decrypt } from './encryptionService';
 
 export class PreferenciasService {
   static async createPreferencias(preferenciasData: CreatePreferenciasData): Promise<PreferenciasResponse> {
@@ -16,6 +17,10 @@ export class PreferenciasService {
       throw new Error('El usuario ya tiene preferencias configuradas');
     }
 
+    // Cifrar los campos sensibles antes de guardar
+    const encryptedClienteKey = encrypt(preferenciasData.cliente_key);
+    const encryptedClienteSecret = encrypt(preferenciasData.cliente_secret);
+
     const sql = `
       INSERT INTO preferencias_usuario (id_usuario, cliente_key, url_tienda, cliente_secret, n8n_webhook, n8n_redes)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -23,9 +28,9 @@ export class PreferenciasService {
     
     const [result] = await db.execute(sql, [
       preferenciasData.id_usuario,
-      preferenciasData.cliente_key,
+      encryptedClienteKey,
       preferenciasData.url_tienda,
-      preferenciasData.cliente_secret,
+      encryptedClienteSecret,
       preferenciasData.n8n_webhook,
       preferenciasData.n8n_redes || null
     ]) as any;
@@ -33,9 +38,9 @@ export class PreferenciasService {
     return {
       id: result.insertId,
       id_usuario: preferenciasData.id_usuario,
-      cliente_key: preferenciasData.cliente_key,
+      cliente_key: preferenciasData.cliente_key, // Retornar descifrado al cliente
       url_tienda: preferenciasData.url_tienda,
-      cliente_secret: preferenciasData.cliente_secret,
+      cliente_secret: preferenciasData.cliente_secret, // Retornar descifrado al cliente
       n8n_webhook: preferenciasData.n8n_webhook,
       n8n_redes: preferenciasData.n8n_redes,
       usuario: {
@@ -61,13 +66,17 @@ export class PreferenciasService {
     }
 
     const row = rows[0];
+    // Descifrar los campos sensibles al leer (manejar null/undefined)
+    const decryptedClienteKey = decrypt(row.cliente_key || '');
+    const decryptedClienteSecret = decrypt(row.cliente_secret || '');
+
     return {
       id: row.id,
       id_usuario: row.id_usuario,
-      cliente_key: row.cliente_key,
-      url_tienda: row.url_tienda,
-      cliente_secret: row.cliente_secret,
-      n8n_webhook: row.n8n_webhook,
+      cliente_key: decryptedClienteKey,
+      url_tienda: row.url_tienda || '',
+      cliente_secret: decryptedClienteSecret,
+      n8n_webhook: row.n8n_webhook || '',
       n8n_redes: row.n8n_redes || undefined,
       usuario: {
         id: row.id_usuario,
@@ -92,13 +101,17 @@ export class PreferenciasService {
     }
 
     const row = rows[0];
+    // Descifrar los campos sensibles al leer (manejar null/undefined)
+    const decryptedClienteKey = decrypt(row.cliente_key || '');
+    const decryptedClienteSecret = decrypt(row.cliente_secret || '');
+
     return {
       id: row.id,
       id_usuario: row.id_usuario,
-      cliente_key: row.cliente_key,
-      url_tienda: row.url_tienda,
-      cliente_secret: row.cliente_secret,
-      n8n_webhook: row.n8n_webhook,
+      cliente_key: decryptedClienteKey,
+      url_tienda: row.url_tienda || '',
+      cliente_secret: decryptedClienteSecret,
+      n8n_webhook: row.n8n_webhook || '',
       n8n_redes: row.n8n_redes || undefined,
       usuario: {
         id: row.id_usuario,
@@ -114,7 +127,8 @@ export class PreferenciasService {
 
     if (preferenciasData.cliente_key) {
       fields.push('cliente_key = ?');
-      values.push(preferenciasData.cliente_key);
+      // Cifrar antes de guardar
+      values.push(encrypt(preferenciasData.cliente_key));
     }
 
     if (preferenciasData.url_tienda) {
@@ -124,7 +138,8 @@ export class PreferenciasService {
 
     if (preferenciasData.cliente_secret) {
       fields.push('cliente_secret = ?');
-      values.push(preferenciasData.cliente_secret);
+      // Cifrar antes de guardar
+      values.push(encrypt(preferenciasData.cliente_secret));
     }
 
     if (preferenciasData.n8n_webhook) {
@@ -170,20 +185,26 @@ export class PreferenciasService {
     
     const [rows] = await db.execute(sql) as any[];
     
-    return rows.map((row: any) => ({
-      id: row.id,
-      id_usuario: row.id_usuario,
-      cliente_key: row.cliente_key,
-      url_tienda: row.url_tienda,
-      cliente_secret: row.cliente_secret,
-      n8n_webhook: row.n8n_webhook,
-      n8n_redes: row.n8n_redes || undefined,
-      usuario: {
-        id: row.id_usuario,
-        nombre_usuario: row.nombre_usuario,
-        email: row.email
-      }
-    }));
+    return rows.map((row: any) => {
+      // Descifrar los campos sensibles al leer (manejar null/undefined)
+      const decryptedClienteKey = decrypt(row.cliente_key || '');
+      const decryptedClienteSecret = decrypt(row.cliente_secret || '');
+
+      return {
+        id: row.id,
+        id_usuario: row.id_usuario,
+        cliente_key: decryptedClienteKey,
+        url_tienda: row.url_tienda || '',
+        cliente_secret: decryptedClienteSecret,
+        n8n_webhook: row.n8n_webhook || '',
+        n8n_redes: row.n8n_redes || undefined,
+        usuario: {
+          id: row.id_usuario,
+          nombre_usuario: row.nombre_usuario,
+          email: row.email
+        }
+      };
+    });
   }
 
   static async validateWooCommerceConnection(preferencias: PreferenciasResponse): Promise<boolean> {
