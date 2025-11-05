@@ -61,9 +61,21 @@ export LC_ALL=C.UTF-8
 TMP_SQL="/tmp/init-db-utf8.sql"
 
 # Copiar el archivo SQL y asegurar codificación UTF-8
-# Si iconv está disponible, convertir a UTF-8, si no, usar el archivo directamente
+# Intentar convertir desde diferentes codificaciones comunes a UTF-8
 if command -v iconv >/dev/null 2>&1; then
-  iconv -f UTF-8 -t UTF-8 /scripts/init-db.sql > "$TMP_SQL" 2>/dev/null || cp /scripts/init-db.sql "$TMP_SQL"
+  # Intentar diferentes codificaciones de origen comunes
+  for encoding in UTF-8 ISO-8859-1 Windows-1252; do
+    if iconv -f "$encoding" -t UTF-8 /scripts/init-db.sql > "$TMP_SQL" 2>/dev/null; then
+      # Verificar que el archivo convertido no esté vacío y contenga caracteres válidos
+      if [ -s "$TMP_SQL" ] && grep -q "contraseña_encriptada" "$TMP_SQL" 2>/dev/null; then
+        break
+      fi
+    fi
+  done
+  # Si ninguna conversión funcionó, usar el archivo original
+  if [ ! -f "$TMP_SQL" ] || [ ! -s "$TMP_SQL" ]; then
+    cp /scripts/init-db.sql "$TMP_SQL"
+  fi
 else
   cp /scripts/init-db.sql "$TMP_SQL"
 fi

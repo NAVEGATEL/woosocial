@@ -390,6 +390,49 @@ class ApiService {
     });
   }
 
+  async createUserPreferences(userId: number, data: {
+    cliente_key: string;
+    url_tienda: string;
+    cliente_secret: string;
+    n8n_webhook?: string;
+    n8n_redes?: string;
+  }): Promise<{ preferencias: PreferenciasUsuario; message: string }> {
+    return this.request<{ preferencias: PreferenciasUsuario; message: string }>(`/admin/users/${userId}/preferences`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getUserSocialCredentials(userId: number): Promise<{ credentials: Array<{
+    id: number;
+    id_usuario: number;
+    plataforma: SocialPlatformId;
+    access_token: string | null;
+    refresh_token: string | null;
+    token_expires_at: string | null;
+    app_id: string | null;
+    app_secret: string | null;
+    username: string | null;
+    account_id: string | null;
+    is_active: boolean;
+    fecha_creacion: string;
+    fecha_actualizacion: string;
+  }> }> {
+    return this.request<{ credentials: Array<any> }>(`/admin/users/${userId}/social`);
+  }
+
+  async updateUserSocialCredential(userId: number, plataforma: SocialPlatformId, data: {
+    account_id?: string;
+    is_active?: boolean;
+    access_token?: string;
+    username?: string;
+  }): Promise<{ credential: any; message: string }> {
+    return this.request<{ credential: any; message: string }>(`/admin/users/${userId}/social/${plataforma}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
   async getMessages(): Promise<{ messages: Array<{
     id: number;
     id_usuario: number | null;

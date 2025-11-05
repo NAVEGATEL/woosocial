@@ -31,6 +31,10 @@ COLLATE utf8mb4_unicode_ci;
 -- Usar la base de datos
 USE token_system;
 
+-- Configurar codificación UTF-8 para asegurar que los caracteres especiales se lean correctamente
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
 -- =============================================
 -- Tabla: users
 -- Almacena información de los usuarios del sistema

@@ -2,9 +2,11 @@ import { Router, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { UserService } from '../services/userService';
 import { PreferenciasService } from '../services/preferenciasService';
+import { SocialMediaService } from '../services/socialMediaService';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 import { CreateUserData, UpdateUserData } from '../models/User';
 import { CreatePreferenciasData, UpdatePreferenciasData } from '../models/PreferenciasUsuario';
+import { UpsertSocialCredentialRequest, SocialPlatformId } from '../models/SocialMedia';
 import { db } from '../database/connection';
 
 const router = Router();
@@ -345,9 +347,25 @@ router.put('/users/:id/preferences', updatePreferenciasValidation, async (req: A
       }
     });
 
-    const preferencias = await PreferenciasService.updatePreferencias(userId, updateData);
+    // Intentar actualizar, si no existen, crear nuevas
+    let preferencias = await PreferenciasService.updatePreferencias(userId, updateData);
+    
     if (!preferencias) {
-      return res.status(404).json({ error: 'Preferencias no encontradas' });
+      // Si no existen, crear nuevas preferencias
+      const createData: CreatePreferenciasData = {
+        id_usuario: userId,
+        cliente_key: updateData.cliente_key || '',
+        url_tienda: updateData.url_tienda || '',
+        cliente_secret: updateData.cliente_secret || '',
+        n8n_webhook: updateData.n8n_webhook,
+        n8n_redes: updateData.n8n_redes
+      };
+      
+      const created = await PreferenciasService.createPreferencias(createData);
+      return res.json({
+        message: 'Preferencias creadas exitosamente',
+        preferencias: created
+      });
     }
 
     res.json({
@@ -378,6 +396,50 @@ router.get('/users/:id/preferences', async (req: AuthRequest, res: Response) => 
   } catch (error: any) {
     res.status(500).json({ 
       error: error.message || 'Error al obtener preferencias'
+    });
+  }
+});
+
+// POST /api/admin/users/:id/preferences - Crear preferencias para un usuario (solo admin)
+router.post('/users/:id/preferences', createPreferenciasValidation, async (req: AuthRequest, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: 'Datos de validación incorrectos',
+        details: errors.array()
+      });
+    }
+
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'ID de usuario inválido' });
+    }
+
+    // Verificar que el usuario existe
+    const user = await UserService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const preferenciasData: CreatePreferenciasData = {
+      id_usuario: userId,
+      cliente_key: req.body.cliente_key,
+      url_tienda: req.body.url_tienda,
+      cliente_secret: req.body.cliente_secret,
+      n8n_webhook: req.body.n8n_webhook,
+      n8n_redes: req.body.n8n_redes
+    };
+
+    const preferencias = await PreferenciasService.createPreferencias(preferenciasData);
+
+    res.status(201).json({
+      message: 'Preferencias creadas exitosamente',
+      preferencias
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      error: error.message || 'Error al crear preferencias'
     });
   }
 });
@@ -431,6 +493,86 @@ router.get('/messages', async (req: AuthRequest, res: Response) => {
     console.error('Error al obtener mensajes:', error);
     res.status(500).json({ 
       error: error.message || 'Error al obtener mensajes'
+    });
+  }
+});
+
+// GET /api/admin/users/:id/social - Obtener credenciales de redes sociales de un usuario (solo admin)
+router.get('/users/:id/social', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'ID de usuario inválido' });
+    }
+
+    const credentials = await SocialMediaService.listConnectionsByUser(userId);
+    res.json({ credentials });
+  } catch (error: any) {
+    res.status(500).json({ 
+      error: error.message || 'Error al obtener credenciales de redes sociales'
+    });
+  }
+});
+
+// PUT /api/admin/users/:id/social/:plataforma - Actualizar credenciales de redes sociales (solo admin)
+router.put('/users/:id/social/:plataforma', [
+  body('account_id').optional().isString(),
+  body('is_active').optional().isBoolean(),
+  body('access_token').optional().isString(),
+  body('username').optional().isString(),
+], async (req: AuthRequest, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: 'Datos de validación incorrectos',
+        details: errors.array()
+      });
+    }
+
+    const userId = parseInt(req.params.id);
+    const plataforma = req.params.plataforma as SocialPlatformId;
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'ID de usuario inválido' });
+    }
+
+    const validPlatforms: SocialPlatformId[] = ['instagram', 'facebook', 'twitter', 'tiktok', 'youtube', 'linkedin', 'pinterest'];
+    if (!validPlatforms.includes(plataforma)) {
+      return res.status(400).json({ error: 'Plataforma inválida' });
+    }
+
+    // Verificar que el usuario existe
+    const user = await UserService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Actualizar o crear credencial
+    const updateData: UpsertSocialCredentialRequest = {
+      plataforma,
+      account_id: req.body.account_id,
+      access_token: req.body.access_token,
+      username: req.body.username,
+      is_active: req.body.is_active,
+    };
+
+    // Eliminar campos undefined
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key as keyof UpsertSocialCredentialRequest] === undefined) {
+        delete updateData[key as keyof UpsertSocialCredentialRequest];
+      }
+    });
+
+    const credential = await SocialMediaService.upsertCredential(userId, updateData);
+
+    res.json({
+      message: 'Credencial actualizada exitosamente',
+      credential
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      error: error.message || 'Error al actualizar credenciales de redes sociales'
     });
   }
 });

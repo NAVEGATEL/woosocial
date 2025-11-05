@@ -30,6 +30,8 @@ export class SocialMediaService {
     const existing = await this.getByUserAndPlatform(id_usuario, data.plataforma);
 
     if (existing) {
+      const isActive = data.is_active !== undefined ? (data.is_active ? 1 : 0) : existing.is_active ? 1 : 0;
+      
       const sql = `
         UPDATE social_media_credentials
         SET access_token = ?,
@@ -39,7 +41,7 @@ export class SocialMediaService {
             app_secret = ?,
             username = ?,
             account_id = ?,
-            is_active = 1,
+            is_active = ?,
             fecha_actualizacion = CURRENT_TIMESTAMP
         WHERE id_usuario = ? AND plataforma = ?
       `;
@@ -52,6 +54,7 @@ export class SocialMediaService {
         data.app_secret ?? existing.app_secret,
         data.username ?? existing.username,
         data.account_id ?? existing.account_id,
+        isActive,
         id_usuario,
         data.plataforma
       ]);
@@ -61,10 +64,12 @@ export class SocialMediaService {
       return updated;
     }
 
+    const isActive = data.is_active !== undefined ? (data.is_active ? 1 : 0) : 1;
+    
     const insertSql = `
       INSERT INTO social_media_credentials (
         id_usuario, plataforma, access_token, refresh_token, token_expires_at, app_id, app_secret, username, account_id, is_active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [result] = await db.execute(insertSql, [
@@ -77,6 +82,7 @@ export class SocialMediaService {
       data.app_secret ?? null,
       data.username ?? null,
       data.account_id ?? null,
+      isActive,
     ]) as any;
 
     const created = await this.getByUserAndPlatform(id_usuario, data.plataforma);

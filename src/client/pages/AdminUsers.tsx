@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { apiService } from '../services/api';
-import { User } from '../types';
+import { User, SocialPlatformId } from '../types';
 import { PreferenciasUsuario } from '../models/PreferenciasUsuario';
+import { SocialMediaCredential } from '../models/SocialMedia';
 
 interface CreateUserData {
   nombre_usuario: string;
@@ -44,6 +45,8 @@ const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingPreferences, setEditingPreferences] = useState<{ userId: number; preferences: PreferenciasUsuario | null } | null>(null);
+  const [socialCredentials, setSocialCredentials] = useState<SocialMediaCredential[]>([]);
+  const [editingSocialPlatform, setEditingSocialPlatform] = useState<{ plataforma: SocialPlatformId; credential: SocialMediaCredential | null } | null>(null);
 
   // Formulario simple
   const [simpleForm, setSimpleForm] = useState<CreateUserData>({
@@ -71,6 +74,14 @@ const AdminUsers: React.FC = () => {
 
   // Formulario de edición de preferencias
   const [editPreferencesForm, setEditPreferencesForm] = useState<UpdatePreferencesData>({});
+
+  // Formulario de edición de credenciales sociales
+  const [editSocialForm, setEditSocialForm] = useState<{
+    account_id?: string;
+    is_active?: boolean;
+    access_token?: string;
+    username?: string;
+  }>({});
 
   useEffect(() => {
     if (activeTab === 'list') {
@@ -141,7 +152,7 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  const handleEditUser = (userToEdit: User) => {
+  const handleEditUser = async (userToEdit: User) => {
     setEditingUser(userToEdit);
     setEditUserForm({
       nombre_usuario: userToEdit.nombre_usuario,
@@ -149,6 +160,35 @@ const AdminUsers: React.FC = () => {
       rol: userToEdit.rol,
       puntos: userToEdit.puntos
     });
+
+    // Cargar preferencias del usuario
+    try {
+      const prefsResponse = await apiService.getUserPreferences(userToEdit.id);
+      setEditPreferencesForm({
+        cliente_key: prefsResponse.preferencias.cliente_key,
+        url_tienda: prefsResponse.preferencias.url_tienda,
+        cliente_secret: prefsResponse.preferencias.cliente_secret,
+        n8n_webhook: prefsResponse.preferencias.n8n_webhook || '',
+        n8n_redes: prefsResponse.preferencias.n8n_redes || ''
+      });
+    } catch (error: any) {
+      // Si no tiene preferencias, inicializar con valores vacíos
+      setEditPreferencesForm({
+        cliente_key: '',
+        url_tienda: '',
+        cliente_secret: '',
+        n8n_webhook: '',
+        n8n_redes: ''
+      });
+    }
+
+    // Cargar credenciales de redes sociales
+    try {
+      const socialResponse = await apiService.getUserSocialCredentials(userToEdit.id);
+      setSocialCredentials(socialResponse.credentials);
+    } catch (error: any) {
+      setSocialCredentials([]);
+    }
   };
 
   const handleEditPreferences = async (userId: number) => {
@@ -163,7 +203,15 @@ const AdminUsers: React.FC = () => {
         n8n_redes: response.preferencias.n8n_redes || ''
       });
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Error al cargar preferencias' });
+      // Si no tiene preferencias, inicializar con valores vacíos para crear nuevas
+      setEditingPreferences({ userId, preferences: null });
+      setEditPreferencesForm({
+        cliente_key: '',
+        url_tienda: '',
+        cliente_secret: '',
+        n8n_webhook: '',
+        n8n_redes: ''
+      });
     }
   };
 
@@ -175,13 +223,61 @@ const AdminUsers: React.FC = () => {
     setMessage(null);
 
     try {
+      // Actualizar usuario
       await apiService.updateUser(editingUser.id, editUserForm);
-      setMessage({ type: 'success', text: 'Usuario actualizado exitosamente' });
+      
+      // Actualizar preferencias si hay datos
+      const hasPreferencesData = editPreferencesForm.cliente_key || editPreferencesForm.url_tienda || editPreferencesForm.cliente_secret;
+      if (hasPreferencesData) {
+        try {
+          await apiService.updateUserPreferences(editingUser.id, editPreferencesForm);
+        } catch (error: any) {
+          // Si falla, puede ser que no tenga preferencias, intentar crear
+          console.log('No se pudieron actualizar preferencias:', error);
+        }
+      }
+
+      setMessage({ type: 'success', text: 'Usuario y preferencias actualizados exitosamente' });
       setEditingUser(null);
       setEditUserForm({});
+      setEditPreferencesForm({});
+      setSocialCredentials([]);
       fetchUsers();
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Error al actualizar usuario' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditSocialCredential = (plataforma: SocialPlatformId) => {
+    const credential = socialCredentials.find(c => c.plataforma === plataforma);
+    setEditingSocialPlatform({ plataforma, credential: credential || null });
+    setEditSocialForm({
+      account_id: credential?.account_id || '',
+      is_active: credential?.is_active ?? true
+    });
+  };
+
+  const handleUpdateSocialCredential = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser || !editingSocialPlatform) return;
+
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      await apiService.updateUserSocialCredential(editingUser.id, editingSocialPlatform.plataforma, editSocialForm);
+      setMessage({ type: 'success', text: 'Credencial de red social actualizada exitosamente' });
+      
+      // Recargar credenciales
+      const socialResponse = await apiService.getUserSocialCredentials(editingUser.id);
+      setSocialCredentials(socialResponse.credentials);
+      
+      setEditingSocialPlatform(null);
+      setEditSocialForm({});
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message || 'Error al actualizar credencial de red social' });
     } finally {
       setLoading(false);
     }
@@ -195,13 +291,31 @@ const AdminUsers: React.FC = () => {
     setMessage(null);
 
     try {
-      await apiService.updateUserPreferences(editingPreferences.userId, editPreferencesForm);
-      setMessage({ type: 'success', text: 'Preferencias actualizadas exitosamente' });
+      // Si no tiene preferencias, crear nuevas; si tiene, actualizar
+      if (editingPreferences.preferences) {
+        await apiService.updateUserPreferences(editingPreferences.userId, editPreferencesForm);
+        setMessage({ type: 'success', text: 'Preferencias actualizadas exitosamente' });
+      } else {
+        // Validar que los campos requeridos estén presentes para crear
+        if (!editPreferencesForm.cliente_key || !editPreferencesForm.url_tienda || !editPreferencesForm.cliente_secret) {
+          setMessage({ type: 'error', text: 'Los campos Consumer Key, URL de Tienda y Consumer Secret son requeridos' });
+          setLoading(false);
+          return;
+        }
+        await apiService.createUserPreferences(editingPreferences.userId, {
+          cliente_key: editPreferencesForm.cliente_key!,
+          url_tienda: editPreferencesForm.url_tienda!,
+          cliente_secret: editPreferencesForm.cliente_secret!,
+          n8n_webhook: editPreferencesForm.n8n_webhook,
+          n8n_redes: editPreferencesForm.n8n_redes
+        });
+        setMessage({ type: 'success', text: 'Preferencias creadas exitosamente' });
+      }
       setEditingPreferences(null);
       setEditPreferencesForm({});
       fetchUsers();
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Error al actualizar preferencias' });
+      setMessage({ type: 'error', text: error.message || 'Error al guardar preferencias' });
     } finally {
       setLoading(false);
     }
@@ -622,63 +736,212 @@ const AdminUsers: React.FC = () => {
       {/* Modal de Edición de Usuario */}
       {editingUser && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white dark:bg-[#1e2124] max-h-[90vh] overflow-y-auto">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Editar Usuario</h3>
-              <form onSubmit={handleUpdateUser} className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">Editar Usuario: {editingUser.nombre_usuario}</h3>
+              <form onSubmit={handleUpdateUser} className="space-y-6">
+                {/* Datos del Usuario */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
+                  <h4 className="text-md font-semibold text-gray-900 dark:text-gray-200 mb-3">Datos del Usuario</h4>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de Usuario</label>
+                      <input
+                        type="text"
+                        value={editUserForm.nombre_usuario || ''}
+                        onChange={(e) => setEditUserForm({ ...editUserForm, nombre_usuario: e.target.value })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                      <input
+                        type="email"
+                        value={editUserForm.email || ''}
+                        onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña (dejar vacío para no cambiar)</label>
+                      <input
+                        type="password"
+                        value={editUserForm.contraseña || ''}
+                        onChange={(e) => setEditUserForm({ ...editUserForm, contraseña: e.target.value })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Rol</label>
+                      <select
+                        value={editUserForm.rol || 'usuario'}
+                        onChange={(e) => setEditUserForm({ ...editUserForm, rol: e.target.value as any })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      >
+                        <option value="usuario">Usuario</option>
+                        <option value="moderador">Moderador</option>
+                        <option value="admin">Administrador</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Puntos</label>
+                      <input
+                        type="number"
+                        value={editUserForm.puntos ?? ''}
+                        onChange={(e) => setEditUserForm({ ...editUserForm, puntos: parseInt(e.target.value) || 0 })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preferencias */}
+                <div>
+                  <h4 className="text-md font-semibold text-gray-900 dark:text-gray-200 mb-3">Preferencias de WooCommerce</h4>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumer Key</label>
+                      <input
+                        type="text"
+                        value={editPreferencesForm.cliente_key || ''}
+                        onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, cliente_key: e.target.value })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumer Secret</label>
+                      <input
+                        type="password"
+                        value={editPreferencesForm.cliente_secret || ''}
+                        onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, cliente_secret: e.target.value })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">URL de la Tienda</label>
+                      <input
+                        type="url"
+                        value={editPreferencesForm.url_tienda || ''}
+                        onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, url_tienda: e.target.value })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook de N8N (Opcional)</label>
+                      <input
+                        type="url"
+                        value={editPreferencesForm.n8n_webhook || ''}
+                        onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, n8n_webhook: e.target.value })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook de N8N para Redes Sociales (Opcional)</label>
+                      <input
+                        type="url"
+                        value={editPreferencesForm.n8n_redes || ''}
+                        onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, n8n_redes: e.target.value })}
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Redes Sociales */}
+                <div>
+                  <h4 className="text-md font-semibold text-gray-900 dark:text-gray-200 mb-3">Redes Sociales</h4>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {(['instagram', 'facebook', 'tiktok'] as SocialPlatformId[]).map((plataforma) => {
+                      const credential = socialCredentials.find(c => c.plataforma === plataforma);
+                      const isActive = credential?.is_active ?? false;
+                      return (
+                        <div
+                          key={plataforma}
+                          className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                            isActive
+                              ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                              : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800'
+                          }`}
+                          onClick={() => handleEditSocialCredential(plataforma)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-200 capitalize">{plataforma}</span>
+                            <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                          </div>
+                          {credential?.account_id && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
+                              ID: {credential.account_id}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-300 dark:border-gray-700">
+                  <button
+                    type="button"
+                    onClick={() => { 
+                      setEditingUser(null); 
+                      setEditUserForm({}); 
+                      setEditPreferencesForm({});
+                      setSocialCredentials([]);
+                    }}
+                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edición de Credencial Social */}
+      {editingSocialPlatform && editingUser && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-[#1e2124]">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">
+                Editar {editingSocialPlatform.plataforma.charAt(0).toUpperCase() + editingSocialPlatform.plataforma.slice(1)}
+              </h3>
+              <form onSubmit={handleUpdateSocialCredential} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Account ID</label>
                   <input
                     type="text"
-                    value={editUserForm.nombre_usuario || ''}
-                    onChange={(e) => setEditUserForm({ ...editUserForm, nombre_usuario: e.target.value })}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={editSocialForm.account_id || ''}
+                    onChange={(e) => setEditSocialForm({ ...editSocialForm, account_id: e.target.value })}
+                    className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                    placeholder="ID de la cuenta"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    value={editUserForm.email || ''}
-                    onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contraseña (dejar vacío para no cambiar)</label>
-                  <input
-                    type="password"
-                    value={editUserForm.contraseña || ''}
-                    onChange={(e) => setEditUserForm({ ...editUserForm, contraseña: e.target.value })}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Rol</label>
-                  <select
-                    value={editUserForm.rol || 'usuario'}
-                    onChange={(e) => setEditUserForm({ ...editUserForm, rol: e.target.value as any })}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  >
-                    <option value="usuario">Usuario</option>
-                    <option value="moderador">Moderador</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Puntos</label>
-                  <input
-                    type="number"
-                    value={editUserForm.puntos ?? ''}
-                    onChange={(e) => setEditUserForm({ ...editUserForm, puntos: parseInt(e.target.value) || 0 })}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={editSocialForm.is_active ?? true}
+                      onChange={(e) => setEditSocialForm({ ...editSocialForm, is_active: e.target.checked })}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</span>
+                  </label>
                 </div>
                 <div className="flex justify-end space-x-3 mt-4">
                   <button
                     type="button"
-                    onClick={() => { setEditingUser(null); setEditUserForm({}); }}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                    onClick={() => { setEditingSocialPlatform(null); setEditSocialForm({}); }}
+                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500"
                   >
                     Cancelar
                   </button>
@@ -696,87 +959,80 @@ const AdminUsers: React.FC = () => {
         </div>
       )}
 
-      {/* Modal de Edición de Preferencias */}
+      {/* Modal de Edición/Creación de Preferencias */}
       {editingPreferences && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-[#1e2124]">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Editar Preferencias</h3>
-              {editingPreferences.preferences ? (
-                <form onSubmit={handleUpdatePreferences} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Consumer Key</label>
-                    <input
-                      type="text"
-                      value={editPreferencesForm.cliente_key || ''}
-                      onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, cliente_key: e.target.value })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Consumer Secret</label>
-                    <input
-                      type="password"
-                      value={editPreferencesForm.cliente_secret || ''}
-                      onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, cliente_secret: e.target.value })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">URL de la Tienda</label>
-                    <input
-                      type="url"
-                      value={editPreferencesForm.url_tienda || ''}
-                      onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, url_tienda: e.target.value })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Webhook de N8N</label>
-                    <input
-                      type="url"
-                      value={editPreferencesForm.n8n_webhook || ''}
-                      onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, n8n_webhook: e.target.value })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Webhook de N8N para Redes</label>
-                    <input
-                      type="url"
-                      value={editPreferencesForm.n8n_redes || ''}
-                      onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, n8n_redes: e.target.value })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-3 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => { setEditingPreferences(null); setEditPreferencesForm({}); }}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {loading ? 'Guardando...' : 'Guardar'}
-                    </button>
-                  </div>
-                </form>
-              ) : (
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">
+                {editingPreferences.preferences ? 'Editar Preferencias' : 'Crear Preferencias'}
+              </h3>
+              <form onSubmit={handleUpdatePreferences} className="space-y-4">
                 <div>
-                  <p className="text-gray-600 mb-4">Este usuario no tiene preferencias configuradas.</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumer Key *</label>
+                  <input
+                    type="text"
+                    value={editPreferencesForm.cliente_key || ''}
+                    onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, cliente_key: e.target.value })}
+                    className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                    required={!editingPreferences.preferences}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumer Secret *</label>
+                  <input
+                    type="password"
+                    value={editPreferencesForm.cliente_secret || ''}
+                    onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, cliente_secret: e.target.value })}
+                    className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                    required={!editingPreferences.preferences}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">URL de la Tienda *</label>
+                  <input
+                    type="url"
+                    value={editPreferencesForm.url_tienda || ''}
+                    onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, url_tienda: e.target.value })}
+                    className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                    required={!editingPreferences.preferences}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook de N8N (Opcional)</label>
+                  <input
+                    type="url"
+                    value={editPreferencesForm.n8n_webhook || ''}
+                    onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, n8n_webhook: e.target.value })}
+                    className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook de N8N para Redes (Opcional)</label>
+                  <input
+                    type="url"
+                    value={editPreferencesForm.n8n_redes || ''}
+                    onChange={(e) => setEditPreferencesForm({ ...editPreferencesForm, n8n_redes: e.target.value })}
+                    className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 mt-4">
                   <button
-                    onClick={() => { setEditingPreferences(null); }}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                    type="button"
+                    onClick={() => { setEditingPreferences(null); setEditPreferencesForm({}); }}
+                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500"
                   >
-                    Cerrar
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Guardando...' : editingPreferences.preferences ? 'Actualizar' : 'Crear'}
                   </button>
                 </div>
-              )}
+              </form>
             </div>
           </div>
         </div>
