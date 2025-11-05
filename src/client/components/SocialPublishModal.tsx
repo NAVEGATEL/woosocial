@@ -386,10 +386,7 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
           {/* Información del webhook */}
           {webhookConfigured === false && (
             <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg text-yellow-800 dark:text-yellow-200">
-              <p className="font-semibold mb-1">⚠️ Webhook no configurado</p>
-              <p className="text-sm">
-                Para publicar en redes sociales, necesitas configurar el webhook de N8N para redes sociales en tus preferencias.
-              </p>
+              <p className="font-semibold">Automatización no configurada</p>
             </div>
           )}
           {webhookConfigured === true && webhookUrl && (
