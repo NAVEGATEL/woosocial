@@ -1,0 +1,35 @@
+# ============================================
+# .dockerignore - Archivos excluidos del contexto Docker
+# ============================================
+# 
+# Este archivo especifica qué archivos NO se copiarán al contexto Docker
+# durante el build. Esto reduce el tamaño de la imagen y acelera el build.
+# 
+# NOTA: Este archivo está incluido en Git para que funcione en todos los dispositivos
+# después de hacer pull.
+#
+# ============================================
+
+node_modules
+npm-debug.log
+Dockerfile*
+.dockerignore
+.git
+.gitignore
+.dist
+coverage
+.env
+.env.*
+.vscode
+.idea
+.tmp
+.cache
+**/dist
+**/.next
+**/build
+**/*.map
+
+# Sistema
+**/.DS_Store
+**/Thumbs.db
+

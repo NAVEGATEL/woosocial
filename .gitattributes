@@ -1,0 +1,22 @@
+# Asegurar que los scripts bash tengan finales de línea LF (Linux/Unix)
+*.sh text eol=lf
+
+# Scripts SQL también deberían usar LF
+*.sql text eol=lf
+
+# Archivos de configuración
+*.yml text
+*.yaml text
+docker-compose*.yml text
+
+# Archivos TypeScript/JavaScript
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+
+# Archivos de texto comunes
+*.md text
+*.txt text
+*.json text
+

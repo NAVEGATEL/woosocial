@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "noEmit": false,
+    "jsx": "preserve",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["src/server.ts", "src/models/**/*", "src/routes/**/*", "src/services/**/*", "src/middleware/**/*", "src/config/**/*", "src/database/**/*"],
+  "exclude": ["src/client/**/*", "node_modules", "dist"]
+}

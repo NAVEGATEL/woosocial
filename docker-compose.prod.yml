@@ -1,0 +1,115 @@
+# ============================================
+# docker-compose.prod.yml - Configuración de producción
+# ============================================
+# 
+# Este archivo define los servicios para producción:
+# - app: Aplicación Node.js optimizada (sin hot-reload)
+# - mysql: Base de datos MySQL 8.0
+# - init-db: Contenedor que inicializa la base de datos automáticamente
+# 
+# USO DESPUÉS DE HACER PULL EN OTRO DISPOSITIVO:
+# 
+# 1. Crear archivo .env con variables de producción:
+#    DB_USER=root
+#    DB_PASSWORD=tu_contraseña_segura
+#    DB_NAME=token_system
+#    NODE_ENV=production
+#    PORT=3001
+# 
+# 2. Construir e iniciar servicios:
+#    docker compose -f docker-compose.prod.yml up -d --build
+# 
+# 3. Ver logs:
+#    docker compose -f docker-compose.prod.yml logs -f app
+# 
+# 4. Detener servicios:
+#    docker compose -f docker-compose.prod.yml down
+# 
+# PUERTOS EXPUESTOS:
+# - 3001: Backend API (Express)
+# - 3309: MySQL (desde el host)
+# 
+# DIFERENCIAS CON DESARROLLO:
+# - No incluye phpMyAdmin (por seguridad)
+# - La aplicación está pre-compilada (más rápida)
+# - No hay hot-reload (cambios requieren rebuild)
+# - Solo incluye dependencias de producción
+# 
+# SEGURIDAD:
+# - Cambia las contraseñas por defecto en producción
+# - No expongas MySQL al exterior sin firewall
+# - Usa variables de entorno para secretos
+# 
+# NOTAS:
+# - La base de datos se inicializa automáticamente con init-db
+# - Los datos de MySQL persisten en el volumen mysql_data
+# - Para actualizar la app: docker compose -f docker-compose.prod.yml up -d --build
+#
+# ============================================
+
+version: "3.9"
+
+services:
+  # Contenedor init que ejecuta el script SQL siempre que sea necesario
+  init-db:
+    image: mysql:8.0
+    container_name: n8n-init-db-prod
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+    volumes:
+      - ./scripts/init-db.sql:/scripts/init-db.sql:ro
+      - ./scripts/init-db-wrapper.sh:/scripts/init-db-wrapper.sh:ro
+    command: bash /scripts/init-db-wrapper.sh
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: "no"  # Solo ejecutar una vez
+
+  app:
+    build:
+      context: .
+      target: prod
+    image: n8n-token-system:prod
+    container_name: n8n-app-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT:-3001}
+      - DB_TYPE=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-token_system}
+    ports:
+      - "3001:3001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      init-db:
+        condition: service_completed_successfully
+
+  mysql:
+    image: mysql:8.0
+    container_name: n8n-mysql-prod
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-password}
+      - MYSQL_DATABASE=${DB_NAME:-token_system}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-password}
+    ports:
+      - "3309:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p${DB_PASSWORD:-password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+
+volumes:
+  mysql_data:
+
+

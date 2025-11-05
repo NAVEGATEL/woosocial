@@ -1,0 +1,141 @@
+# ============================================
+# docker-compose.yml - Configuración de desarrollo
+# ============================================
+# 
+# Este archivo define todos los servicios necesarios para desarrollo:
+# - app: Aplicación Node.js con hot-reload (Vite + Express)
+# - mysql: Base de datos MySQL 8.0
+# - init-db: Contenedor que inicializa la base de datos automáticamente
+# - phpmyadmin: Interfaz web para administrar MySQL (opcional)
+# 
+# USO DESPUÉS DE HACER PULL EN OTRO DISPOSITIVO:
+# 
+# 1. Crear archivo .env (copiar de .env.example si existe):
+#    DB_USER=root
+#    DB_PASSWORD=password
+#    DB_NAME=token_system
+#    NODE_ENV=development
+#    PORT=3001
+# 
+# 2. Iniciar todos los servicios:
+#    docker compose up -d
+# 
+# 3. Ver logs:
+#    docker compose logs -f app
+# 
+# 4. Detener servicios:
+#    docker compose down
+# 
+# 5. Detener y eliminar volúmenes (CUIDADO: borra datos):
+#    docker compose down -v
+# 
+# PUERTOS EXPUESTOS:
+# - 3000: Frontend (Vite)
+# - 3001: Backend API (Express)
+# - 3309: MySQL (desde el host)
+# - 8090: phpMyAdmin
+# 
+# ACCESOS:
+# - Frontend: http://localhost:3000
+# - API: http://localhost:3001
+# - phpMyAdmin: http://localhost:8090
+#   - Usuario: root
+#   - Contraseña: navega (o la que configures en MYSQL_ROOT_PASSWORD)
+# 
+# NOTAS:
+# - La base de datos se inicializa automáticamente con init-db
+# - Los cambios en el código se reflejan automáticamente (hot-reload)
+# - Los datos de MySQL persisten en el volumen mysql_data_v2
+#
+# ============================================
+
+services:
+  # Contenedor init que ejecuta el script SQL siempre que sea necesario
+  init-db:
+    image: mysql:8.0
+    container_name: n8n-init-db
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=navega
+    volumes:
+      - ./scripts/init-db.sql:/scripts/init-db.sql:ro
+      - ./scripts/init-db-wrapper.sh:/scripts/init-db-wrapper.sh:ro
+    command: bash /scripts/init-db-wrapper.sh
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: "no"  # Solo ejecutar una vez
+
+  app:
+    build:
+      context: .
+      target: dev
+    image: n8n-token-system:dev
+    container_name: n8n-app
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=${PORT:-3001}
+      - DB_TYPE=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-token_system}
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - VITE_HOST=0.0.0.0
+      - VITE_PORT=3000
+    ports:
+      - "3001:3001"   # API
+      - "3000:3000"   # Vite (puerto 3000)
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      mysql:
+        condition: service_healthy
+      init-db:
+        condition: service_completed_successfully
+
+  mysql:
+    image: mysql:8.0
+    container_name: n8n-mysql
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    environment:
+      - MYSQL_ROOT_PASSWORD=navega
+      - MYSQL_DATABASE=token_system
+      - MYSQL_PASSWORD=password
+    ports:
+      - "3309:3306"  # host:container
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mysql_data_v2:/var/lib/mysql
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+
+  # Opcional: phpMyAdmin para explorar la DB
+  phpmyadmin:
+    image: phpmyadmin:5.2.1
+    platform: linux/amd64
+    container_name: n8n-phpmyadmin
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+    ports:
+      - "8090:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      init-db:
+        condition: service_completed_successfully
+
+volumes:
+  mysql_data_v2:
+
+
