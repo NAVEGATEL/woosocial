@@ -138,10 +138,10 @@ const Transacciones: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className=" min-h-screen p-6 -mx-6 -mt-6 mb-6 flex items-center justify-center">
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Cargando transacciones...</span>
+          <span className="ml-2 text-gray-200">Cargando transacciones...</span>
         </div>
       </div>
     );
@@ -149,31 +149,33 @@ const Transacciones: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="text-center py-8">
-          <svg className="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Error</h3>
-          <p className="mt-1 text-sm text-gray-500">{error}</p>
-          <button
-            onClick={loadTransacciones}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-          >
-            Reintentar
-          </button>
+      <div className=" min-h-screen p-6 -mx-6 -mt-6 mb-6 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="text-center py-8">
+            <svg className="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Error</h3>
+            <p className="mt-1 text-sm text-gray-500">{error}</p>
+            <button
+              onClick={loadTransacciones}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+            >
+              Reintentar
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6  min-h-screen p-6 -mx-6 -mt-6 mb-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Transacciones</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-gray-100">Gestión de Transacciones</h1>
+          <p className="mt-1 text-sm text-gray-300">
             Administra las transacciones de puntos del sistema
           </p>
         </div>
@@ -191,20 +193,20 @@ const Transacciones: React.FC = () => {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-[#1e2124] overflow-hidden shadow rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">T</span>
+                    <span className="text-white dark:text-gray-900 text-sm font-medium">T</span>
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">
                       Total Transacciones
                     </dt>
-                    <dd className="text-lg font-medium text-gray-900">
+                    <dd className="text-lg font-medium text-gray-900 dark:text-white">
                       {stats.total_transacciones}
                     </dd>
                   </dl>
@@ -213,7 +215,7 @@ const Transacciones: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-[#1e2124] overflow-hidden shadow rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -223,11 +225,11 @@ const Transacciones: React.FC = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">
                       Puntos Otorgados
                     </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.puntos_otorgados}
+                    <dd className="text-lg font-medium text-gray-900 dark:text-white">
+                      {stats.total_puntos_ganados}
                     </dd>
                   </dl>
                 </div>
@@ -235,7 +237,7 @@ const Transacciones: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-[#1e2124] overflow-hidden shadow rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -245,11 +247,11 @@ const Transacciones: React.FC = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">
                       Puntos Descontados
                     </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.puntos_descontados}
+                    <dd className="text-lg font-medium text-gray-900 dark:text-white">
+                      {stats.total_puntos_gastados}
                     </dd>
                   </dl>
                 </div>
@@ -257,7 +259,7 @@ const Transacciones: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-[#1e2124] overflow-hidden shadow rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -267,11 +269,11 @@ const Transacciones: React.FC = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">
                       Balance Neto
                     </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.balance_neto}
+                    <dd className="text-lg font-medium text-gray-900 dark:text-white">
+                      {stats.balance_actual}
                     </dd>
                   </dl>
                 </div>
@@ -282,17 +284,17 @@ const Transacciones: React.FC = () => {
       )}
 
       {/* Filtros */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Filtros</h3>
+      <div className="bg-white dark:bg-[#1e2124] shadow rounded-lg p-6 border dark:border-gray-700">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">Filtros</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-1">
               Tipo de Transacción
             </label>
             <select
               value={filters.tipo}
               onChange={(e) => setFilters({ ...filters, tipo: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             >
               <option value="">Todos los tipos</option>
               <option value="compra">Compra</option>
@@ -303,25 +305,25 @@ const Transacciones: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-1">
               Fecha Desde
             </label>
             <input
               type="date"
               value={filters.fecha_desde}
               onChange={(e) => setFilters({ ...filters, fecha_desde: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-1">
               Fecha Hasta
             </label>
             <input
               type="date"
               value={filters.fecha_hasta}
               onChange={(e) => setFilters({ ...filters, fecha_hasta: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             />
           </div>
         </div>
@@ -342,43 +344,43 @@ const Transacciones: React.FC = () => {
       </div>
 
       {/* Tabla de Transacciones */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-[#1e2124] shadow rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-200">
             Transacciones ({transacciones.length})
           </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-[#1e2124]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
                   ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Usuario
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
+                  USUARIO
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tipo
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
+                  TIPO
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Descripción
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
+                  DESCRIPCIÓN
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Puntos
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
+                  PUNTOS
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fecha
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
+                  FECHA
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
+                  ACCIONES
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-[#1e2124] divide-y divide-gray-200 dark:divide-gray-700">
               {transacciones.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-900 dark:text-gray-200">
                     No hay transacciones disponibles
                   </td>
                 </tr>

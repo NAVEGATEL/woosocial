@@ -8,6 +8,36 @@ import ProductGrid from '../components/ProductGrid';
 import { getCache, setCache } from '../utils/cache';
 import { FaTiktok, FaInstagram, FaFacebook } from 'react-icons/fa';
 
+// Lista de motes graciosos para el admin
+const ADMIN_MOTES = [
+  'máquina',
+  'campeón',
+  'leyenda',
+  'señor de la noche',
+  'genio',
+  'maestro',
+  'gurú',
+  'héroe',
+  'cracks',
+  'pro',
+  'ninja',
+  'magistral',
+  'jefe',
+  'capitán',
+  'comandante',
+  'líder supremo',
+  'guardián',
+  'sabio',
+  'oráculo',
+  'dios del código'
+];
+
+// Función para obtener un mote aleatorio
+const getRandomMote = (): string => {
+  const randomIndex = Math.floor(Math.random() * ADMIN_MOTES.length);
+  return ADMIN_MOTES[randomIndex];
+};
+
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -18,6 +48,16 @@ const Dashboard: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | 'all'>('all');
   const [stockFilter, setStockFilter] = useState<'all' | 'instock' | 'outofstock'>('all');
   const [featureFilter, setFeatureFilter] = useState<'all' | 'featured' | 'onsale'>('all');
+  const [adminMote, setAdminMote] = useState<string | null>(null);
+
+  // Generar un mote aleatorio cuando el usuario admin carga la página
+  useEffect(() => {
+    if (user?.rol === 'admin') {
+      setAdminMote(getRandomMote());
+    } else {
+      setAdminMote(null);
+    }
+  }, [user?.rol, user?.id]); // Se regenera cuando cambia el usuario o su rol
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -75,9 +115,9 @@ const Dashboard: React.FC = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            ¡Bienvenido, {user?.nombre_usuario}!
-          </h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              ¡Bienvenido, {user?.rol === 'admin' && adminMote ? adminMote : user?.nombre_usuario}!
+            </h1>
           <p className="mt-1 text-sm text-gray-900 dark:text-gray-400">
             Aquí tienes un resumen de tu actividad en el sistema de tokens.
           </p>
@@ -236,30 +276,33 @@ const Dashboard: React.FC = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <a
                   href="/transacciones"
-                  className="relative group bg-transparent dark:bg-[#1e2124] p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                  className="relative group bg-transparent dark:bg-[#1e2124] p-3 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                 >
-                  <div>
-                    <span className="rounded-lg inline-flex p-3 bg-blue-900 text-blue-300 ring-4 ring-[#1e2124]">
-                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                    </span>
-                  </div>
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      Ver Transacciones
-                    </h3>
-                    <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">
-                      Revisa tu historial de transacciones y puntos.
-                    </p>
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <span className="rounded-lg inline-flex p-3 bg-blue-900 text-blue-300 ring-4 ring-[#1e2124]">
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                        <span className="absolute inset-0" aria-hidden="true" />
+                        Ver Transacciones
+                      </h3>
+                      <p className="text-sm text-gray-900 dark:text-gray-400">
+                        Revisa tu historial de transacciones y puntos.
+                      </p>
+                    </div>
                   </div>
                 </a>
 
                 <a
                   href="/preferencias"
-                  className="relative group bg-transparent dark:bg-[#1e2124] p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                  className="relative group bg-transparent dark:bg-[#1e2124] p-3 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                 >
+                  <div className="flex items-center gap-4">
                   <div>
                     <span className="rounded-lg inline-flex p-3 bg-green-900 text-green-300 ring-4 ring-[#1e2124]">
                       <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -268,21 +311,23 @@ const Dashboard: React.FC = () => {
                       </svg>
                     </span>
                   </div>
-                  <div className="mt-8">
+                  <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                       <span className="absolute inset-0" aria-hidden="true" />
                       Configurar Preferencias
                     </h3>
-                    <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">
-                      Configura tu tienda WooCommerce y webhook de N8N.
+                    <p className=" text-sm text-gray-900 dark:text-gray-400">
+                      Configurar WooCommerce y webhook de N8N.
                     </p>
+                  </div>
                   </div>
                 </a>
 
                 <a
                   href="/transacciones?action=new"
-                  className="relative group bg-transparent dark:bg-[#1e2124] p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                  className="relative group bg-transparent dark:bg-[#1e2124] p-3 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                 >
+                  <div className="flex items-center gap-4">
                   <div>
                     <span className="rounded-lg inline-flex p-3 bg-yellow-900 text-yellow-300 ring-4 ring-[#1e2124]">
                       <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -290,21 +335,23 @@ const Dashboard: React.FC = () => {
                       </svg>
                     </span>
                   </div>
-                  <div className="mt-8">
+                  <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                       <span className="absolute inset-0" aria-hidden="true" />
                       Nueva Transacción
                     </h3>
-                    <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">
+                    <p className=" text-sm text-gray-900 dark:text-gray-400">
                       Crea una nueva transacción de puntos.
                     </p>
+                  </div>
                   </div>
                 </a>
 
                 <a
                   href="/generaciones"
-                  className="relative group bg-transparent dark:bg-[#1e2124] p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                  className="relative group bg-transparent dark:bg-[#1e2124] p-3 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                 >
+                  <div className="flex items-center gap-4">
                   <div>
                     <span className="rounded-lg inline-flex p-3 bg-indigo-900 text-indigo-300 ring-4 ring-[#1e2124]">
                       <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -312,21 +359,23 @@ const Dashboard: React.FC = () => {
                       </svg>
                     </span>
                   </div>
-                  <div className="mt-8">
+                  <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                       <span className="absolute inset-0" aria-hidden="true" />
                       Ver Generaciones
                     </h3>
-                    <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">
+                    <p className=" text-sm text-gray-900 dark:text-gray-400">
                       Revisa todos tus videos generados.
                     </p>
+                  </div>
                   </div>
                 </a>
 
                 <a
                   href="/admin/users"
-                  className="relative group bg-transparent dark:bg-[#1e2124] p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                  className="relative group bg-transparent dark:bg-[#1e2124] p-3 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                 >
+                  <div className="flex items-center gap-4">
                   <div>
                     <span className="rounded-lg inline-flex p-3 bg-purple-900 text-purple-300 ring-4 ring-[#1e2124]">
                       <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -334,14 +383,15 @@ const Dashboard: React.FC = () => {
                       </svg>
                     </span>
                   </div>
-                  <div className="mt-8">
+                  <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                       <span className="absolute inset-0" aria-hidden="true" />
                       Administrar Usuarios
                     </h3>
-                    <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">
+                    <p className=" text-sm text-gray-900 dark:text-gray-400">
                       Crear y gestionar usuarios del sistema.
                     </p>
+                  </div>
                   </div>
                 </a>
               </div>
