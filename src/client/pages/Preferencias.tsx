@@ -221,12 +221,16 @@ const Preferencias: React.FC = () => {
     );
   }
 
+  const isAdmin = user?.rol === 'admin';
+
   return (
     <>
     <div className=" px-4 sm:px-0">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">Preferencias</h1>
       <p className="text-gray-600 dark:text-white text-center">
-        Configura tus preferencias y conecta tus redes sociales para publicar fácilmente los videos generados.
+        {isAdmin 
+          ? 'Cambia tu contraseña desde aquí.'
+          : 'Configura tus preferencias y conecta tus redes sociales para publicar fácilmente los videos generados.'}
       </p>
       <div className="mt-6 flex flex-col items-center justify-center w-full space-y-6">
         <div className="w-full space-y-6">
@@ -252,8 +256,8 @@ const Preferencias: React.FC = () => {
             </div>
           )}
 
-          {/* Lista de Redes Sociales */}
-          
+          {/* Lista de Redes Sociales - Solo visible para no-admin */}
+          {!isAdmin && (
             <div className="flex flex-col md:flex-row md:gap-8 gap-4 justify-center items-center justify-center">
               {platforms.map((platform, index) => {
                 const IconComponent = platform.icon;
@@ -293,10 +297,10 @@ const Preferencias: React.FC = () => {
                 );
               })}
             </div>
-          
+          )}
 
-          {/* Formularios lado a lado */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Formularios */}
+          <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-1 max-w-md mx-auto' : 'lg:grid-cols-2'} gap-6`}>
             {/* Formulario de Cambio de Contraseña */}
             <div className={`bg-white dark:bg-[#1e2124] rounded-lg border border-gray-200 dark:border-gray-600 p-4 h-fit transform-gpu transition-all duration-300 ease-out ${isAnimating ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
               style={{ 
@@ -366,85 +370,87 @@ const Preferencias: React.FC = () => {
               </form>
             </div>
 
-            {/* Formulario de Contacto */}
-            <div className={`bg-white dark:bg-[#1e2124] rounded-lg border border-gray-200 dark:border-gray-600 p-4 transform-gpu transition-all duration-300 ease-out ${isAnimating ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
-              style={{ 
-                transitionDelay: isAnimating ? '400ms' : '0ms' 
-              }}
-            >
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Contacto</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                ¿Tienes alguna pregunta, sugerencia o problema? Envíanos un mensaje y te responderemos lo antes posible.
-              </p>
-              {contactError && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md text-red-600 dark:text-red-200 text-sm">
-                  {contactError}
-                </div>
-              )}
-              {contactSuccess && (
-                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-md text-green-600 dark:text-green-200 text-sm">
-                  {contactSuccess}
-                </div>
-              )}
-              <form onSubmit={handleContactSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Tipo de Consulta
-                  </label>
-                  <select
-                    id="tipo"
-                    value={contactForm.tipo}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setContactForm({ ...contactForm, tipo: (e.target as HTMLSelectElement).value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            {/* Formulario de Contacto - Solo visible para no-admin */}
+            {!isAdmin && (
+              <div className={`bg-white dark:bg-[#1e2124] rounded-lg border border-gray-200 dark:border-gray-600 p-4 transform-gpu transition-all duration-300 ease-out ${isAnimating ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+                style={{ 
+                  transitionDelay: isAnimating ? '400ms' : '0ms' 
+                }}
+              >
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Contacto</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  ¿Tienes alguna pregunta, sugerencia o problema? Envíanos un mensaje y te responderemos lo antes posible.
+                </p>
+                {contactError && (
+                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md text-red-600 dark:text-red-200 text-sm">
+                    {contactError}
+                  </div>
+                )}
+                {contactSuccess && (
+                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-md text-green-600 dark:text-green-200 text-sm">
+                    {contactSuccess}
+                  </div>
+                )}
+                <form onSubmit={handleContactSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Tipo de Consulta
+                    </label>
+                    <select
+                      id="tipo"
+                      value={contactForm.tipo}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setContactForm({ ...contactForm, tipo: (e.target as HTMLSelectElement).value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="consulta">Consulta General</option>
+                      <option value="soporte">Soporte Técnico</option>
+                      <option value="sugerencia">Sugerencia</option>
+                      <option value="error">Reportar Error</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="asunto" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Asunto
+                    </label>
+                    <input
+                      type="text"
+                      id="asunto"
+                      required
+                      minLength={3}
+                      maxLength={200}
+                      value={contactForm.asunto}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContactForm({ ...contactForm, asunto: (e.target as HTMLInputElement).value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="Ej: Problema con la generación de videos"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="mensaje" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Mensaje
+                    </label>
+                    <textarea
+                      id="mensaje"
+                      required
+                      minLength={10}
+                      maxLength={2000}
+                      rows={6}
+                      value={contactForm.mensaje}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContactForm({ ...contactForm, mensaje: (e.target as HTMLTextAreaElement).value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                      placeholder="Describe tu consulta, problema o sugerencia..."
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={sendingContact}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="consulta">Consulta General</option>
-                    <option value="soporte">Soporte Técnico</option>
-                    <option value="sugerencia">Sugerencia</option>
-                    <option value="error">Reportar Error</option>
-                    <option value="otro">Otro</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="asunto" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Asunto
-                  </label>
-                  <input
-                    type="text"
-                    id="asunto"
-                    required
-                    minLength={3}
-                    maxLength={200}
-                    value={contactForm.asunto}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContactForm({ ...contactForm, asunto: (e.target as HTMLInputElement).value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Ej: Problema con la generación de videos"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="mensaje" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Mensaje
-                  </label>
-                  <textarea
-                    id="mensaje"
-                    required
-                    minLength={10}
-                    maxLength={2000}
-                    rows={6}
-                    value={contactForm.mensaje}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContactForm({ ...contactForm, mensaje: (e.target as HTMLTextAreaElement).value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-                    placeholder="Describe tu consulta, problema o sugerencia..."
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={sendingContact}
-                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {sendingContact ? 'Enviando...' : 'Enviar Mensaje'}
-                </button>
-              </form>
-            </div>
+                    {sendingContact ? 'Enviando...' : 'Enviar Mensaje'}
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
 
         </div>

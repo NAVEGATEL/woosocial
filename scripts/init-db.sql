@@ -37,13 +37,13 @@ USE token_system;
 -- =============================================
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_usuario VARCHAR(50) NOT NULL UNIQUE COMMENT 'Nombre de usuario único',
-    email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Email único del usuario',
-    contraseña_encriptada VARCHAR(255) NOT NULL COMMENT 'Contraseña hasheada con bcrypt',
+    nombre_usuario VARCHAR(50) NOT NULL UNIQUE COMMENT 'Nombre de usuario unico',
+    email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Email unico del usuario',
+    contraseña_encriptada VARCHAR(255) NOT NULL COMMENT 'Contrasena hasheada con bcrypt',
     puntos INT DEFAULT 0 COMMENT 'Balance actual de puntos/tokens',
     rol ENUM('admin', 'usuario', 'moderador') DEFAULT 'usuario' COMMENT 'Rol del usuario en el sistema',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha de registro del usuario',
-    ultimo_login TIMESTAMP NULL COMMENT 'Último acceso del usuario',
+    ultimo_login TIMESTAMP NULL COMMENT 'Ultimo acceso del usuario',
     
     -- Índices para mejorar el rendimiento
     INDEX idx_users_email (email),

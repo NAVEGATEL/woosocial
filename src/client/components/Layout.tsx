@@ -164,40 +164,57 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 >
                   Dashboard
                 </Link>
-                <Link
-                  to="/generaciones"
-                  ref={(el) => (linkRefs.current['/generaciones'] = el)}
-                  className={`px-3 py-2 text-sm font-medium ${
-                    isActive('/generaciones') 
-                      ? 'text-gray-900 dark:text-white' 
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  Generaciones
-                </Link>
-                <Link
-                  to="/publicaciones"
-                  ref={(el) => (linkRefs.current['/publicaciones'] = el)}
-                  className={`px-3 py-2 text-sm font-medium ${
-                    isActive('/publicaciones') 
-                      ? 'text-gray-900 dark:text-white' 
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  Publicaciones
-                </Link>
+                {user.rol !== 'admin' && (
+                  <>
+                    <Link
+                      to="/generaciones"
+                      ref={(el) => (linkRefs.current['/generaciones'] = el)}
+                      className={`px-3 py-2 text-sm font-medium ${
+                        isActive('/generaciones') 
+                          ? 'text-gray-900 dark:text-white' 
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Generaciones
+                    </Link>
+                    <Link
+                      to="/publicaciones"
+                      ref={(el) => (linkRefs.current['/publicaciones'] = el)}
+                      className={`px-3 py-2 text-sm font-medium ${
+                        isActive('/publicaciones') 
+                          ? 'text-gray-900 dark:text-white' 
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Publicaciones
+                    </Link>
+                  </>
+                )}
                 {user.rol === 'admin' && (
-                  <Link
-                    to="/transacciones"
-                    ref={(el) => (linkRefs.current['/transacciones'] = el)}
-                    className={`px-3 py-2 text-sm font-medium ${
-                      isActive('/transacciones') 
-                        ? 'text-gray-900 dark:text-white' 
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  >
-                    Transacciones
-                  </Link>
+                  <>
+                    <Link
+                      to="/transacciones"
+                      ref={(el) => (linkRefs.current['/transacciones'] = el)}
+                      className={`px-3 py-2 text-sm font-medium ${
+                        isActive('/transacciones') 
+                          ? 'text-gray-900 dark:text-white' 
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Transacciones
+                    </Link>
+                    <Link
+                      to="/mensajes"
+                      ref={(el) => (linkRefs.current['/mensajes'] = el)}
+                      className={`px-3 py-2 text-sm font-medium ${
+                        isActive('/mensajes') 
+                          ? 'text-gray-900 dark:text-white' 
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Mensajes
+                    </Link>
+                  </>
                 )}
                 <Link
                   to="/preferencias"
@@ -285,20 +302,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   )}
                 </button>
               ) : (
-                <div className="flex space-x-2 sm:space-x-4">
-                  <Link
-                    to="/login"
-                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Iniciar Sesión
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-                  >
-                    Registrarse
-                  </Link>
-                </div>
+                <Link
+                  to="/login"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Iniciar Sesión
+                </Link>
               )}
             </div>
           </div>
@@ -326,40 +335,57 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               >
                 Dashboard
               </Link>
-              <Link
-                to="/generaciones"
-                onClick={() => setIsMenuOpen(false)}
-                className={`px-4 py-3 text-base font-medium ${
-                  isActive('/generaciones') 
-                  ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-              >
-                Generaciones
-              </Link>
-              <Link
-                to="/publicaciones"
-                onClick={() => setIsMenuOpen(false)}
-                className={`px-4 py-3 text-base font-medium ${
-                  isActive('/publicaciones') 
-                  ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-              >
-                Publicaciones
-              </Link>
-              {user.rol === 'admin' && (
-                <Link
-                  to="/transacciones"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`px-4 py-3 text-base font-medium ${
-                    isActive('/transacciones') 
-                    ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
+              {user.rol !== 'admin' && (
+                <>
+                  <Link
+                    to="/generaciones"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`px-4 py-3 text-base font-medium ${
+                      isActive('/generaciones') 
+                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  Transacciones
-                </Link>
+                    }`}
+                  >
+                    Generaciones
+                  </Link>
+                  <Link
+                    to="/publicaciones"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`px-4 py-3 text-base font-medium ${
+                      isActive('/publicaciones') 
+                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    Publicaciones
+                  </Link>
+                </>
+              )}
+              {user.rol === 'admin' && (
+                <>
+                  <Link
+                    to="/transacciones"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`px-4 py-3 text-base font-medium ${
+                      isActive('/transacciones') 
+                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    Transacciones
+                  </Link>
+                  <Link
+                    to="/mensajes"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`px-4 py-3 text-base font-medium ${
+                      isActive('/mensajes') 
+                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    Mensajes
+                  </Link>
+                </>
               )}
               <Link
                 to="/preferencias"

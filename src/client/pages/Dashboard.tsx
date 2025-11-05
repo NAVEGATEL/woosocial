@@ -302,28 +302,6 @@ const Dashboard: React.FC = () => {
                 </a>
 
                 <a
-                  href="/generaciones"
-                  className="relative group bg-transparent dark:bg-[#1e2124] p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                >
-                  <div>
-                    <span className="rounded-lg inline-flex p-3 bg-indigo-900 text-indigo-300 ring-4 ring-[#1e2124]">
-                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </span>
-                  </div>
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      Ver Generaciones
-                    </h3>
-                    <p className="mt-2 text-sm text-gray-900 dark:text-gray-400">
-                      Revisa todos tus videos generados.
-                    </p>
-                  </div>
-                </a>
-
-                <a
                   href="/admin/users"
                   className="relative group bg-transparent dark:bg-[#1e2124] p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                 >

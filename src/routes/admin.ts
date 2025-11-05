@@ -5,6 +5,7 @@ import { PreferenciasService } from '../services/preferenciasService';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 import { CreateUserData, UpdateUserData } from '../models/User';
 import { CreatePreferenciasData, UpdatePreferenciasData } from '../models/PreferenciasUsuario';
+import { db } from '../database/connection';
 
 const router = Router();
 
@@ -377,6 +378,59 @@ router.get('/users/:id/preferences', async (req: AuthRequest, res: Response) => 
   } catch (error: any) {
     res.status(500).json({ 
       error: error.message || 'Error al obtener preferencias'
+    });
+  }
+});
+
+// GET /api/admin/messages - Obtener mensajes de contacto (solo admin)
+router.get('/messages', async (req: AuthRequest, res: Response) => {
+  try {
+    // Obtener mensajes de contacto desde logs_sistema
+    // Los mensajes de contacto tienen accion en ['consulta', 'soporte', 'sugerencia', 'error', 'otro']
+    const sql = `
+      SELECT 
+        l.id,
+        l.id_usuario,
+        l.accion as tipo,
+        l.descripcion,
+        l.ip_address,
+        l.user_agent,
+        l.fecha,
+        u.nombre_usuario,
+        u.email
+      FROM logs_sistema l
+      LEFT JOIN users u ON l.id_usuario = u.id
+      WHERE l.accion IN ('consulta', 'soporte', 'sugerencia', 'error', 'otro')
+      ORDER BY l.fecha DESC
+    `;
+
+    const [rows] = await db.execute(sql);
+    const messages = (rows as any[]).map(row => {
+      // Parsear descripcion que tiene formato "asunto:mensaje"
+      const descripcion = row.descripcion || '';
+      const parts = descripcion.split(':');
+      const asunto = parts[0] || '';
+      const mensaje = parts.slice(1).join(':') || '';
+
+      return {
+        id: row.id,
+        id_usuario: row.id_usuario,
+        tipo: row.tipo,
+        asunto,
+        mensaje,
+        ip_address: row.ip_address,
+        user_agent: row.user_agent,
+        fecha: row.fecha,
+        nombre_usuario: row.nombre_usuario || 'Usuario eliminado',
+        email: row.email || 'N/A'
+      };
+    });
+
+    res.json({ messages });
+  } catch (error: any) {
+    console.error('Error al obtener mensajes:', error);
+    res.status(500).json({ 
+      error: error.message || 'Error al obtener mensajes'
     });
   }
 });
