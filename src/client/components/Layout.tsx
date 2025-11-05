@@ -288,13 +288,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="flex space-x-2 sm:space-x-4">
                   <Link
                     to="/login"
-                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium"
+                    className="text-white px-2 py-2 rounded-md text-sm font-medium h-[40px] border border-gray-300 dark:border-gray-600 w-[fit-content] bg-green-600 hover:bg-green-700"
                   >
                     Iniciar Sesión
                   </Link>
                   <Link
                     to="/register"
-                    className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                    className="bg-purple-600 text-white px-2 py-2 rounded-md text-sm font-medium hover:bg-purple-700 h-[40px] border border-gray-300 dark:border-gray-600 w-[fit-content]"
                   >
                     Registrarse
                   </Link>
