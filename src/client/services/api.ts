@@ -390,6 +390,32 @@ class ApiService {
     });
   }
 
+  async getMessages(): Promise<{ messages: Array<{
+    id: number;
+    id_usuario: number | null;
+    tipo: 'consulta' | 'soporte' | 'sugerencia' | 'error' | 'otro';
+    asunto: string;
+    mensaje: string;
+    ip_address: string | null;
+    user_agent: string | null;
+    fecha: string;
+    nombre_usuario: string;
+    email: string;
+  }> }> {
+    return this.request<{ messages: Array<{
+      id: number;
+      id_usuario: number | null;
+      tipo: 'consulta' | 'soporte' | 'sugerencia' | 'error' | 'otro';
+      asunto: string;
+      mensaje: string;
+      ip_address: string | null;
+      user_agent: string | null;
+      fecha: string;
+      nombre_usuario: string;
+      email: string;
+    }> }>('/admin/messages');
+  }
+
   // WooCommerce
   async getWooCommerceProducts(page: number = 1, perPage: number = 10, categoryId?: number): Promise<{
     products: any[];
