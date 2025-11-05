@@ -45,7 +45,7 @@ const Footer: React.FC = () => {
             <div className="w-[fit-content]">
               <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Contacto</h4>
               <ul className="space-y-2">
-                <li><span className="font-medium text-gray-900 dark:text-white">Email:</span> info@navegatime.es</li>
+                <li><span className="font-medium text-gray-900 dark:text-white">Email:</span> info@navegatel.es</li>
                 <li><span className="font-medium text-gray-900 dark:text-white">Tel:</span> 673 66 09 10 - 865 78 44 66</li>
                 <li><span className="font-medium text-gray-900 dark:text-white">Dirección:</span> C/ Cardenal Cisneros, 5 - 03201 Elche (Alicante)</li>
               </ul>

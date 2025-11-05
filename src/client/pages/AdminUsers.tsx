@@ -242,23 +242,23 @@ const AdminUsers: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-[#1e2124] shadow rounded-lg border border-gray-300 dark:border-gray-700">
+          <div className="px-3 py-3 sm:px-4 sm:py-4">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-200 mb-6">
               Administración de Usuarios
             </h1>
 
             {/* Tabs */}
-            <div className="border-b border-gray-200 mb-6">
+            <div className="border-b border-gray-300 dark:border-gray-700 mb-6">
               <nav className="-mb-px flex space-x-8">
                 <button
                   onClick={() => setActiveTab('list')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'list'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-200 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   Lista de Usuarios
@@ -267,8 +267,8 @@ const AdminUsers: React.FC = () => {
                   onClick={() => setActiveTab('create-simple')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'create-simple'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-200 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   Crear Usuario Simple
@@ -277,8 +277,8 @@ const AdminUsers: React.FC = () => {
                   onClick={() => setActiveTab('create-with-preferences')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'create-with-preferences'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-200 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   Crear Usuario con Preferencias
@@ -302,46 +302,46 @@ const AdminUsers: React.FC = () => {
               <div>
                 {loadingUsers ? (
                   <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 dark:border-purple-400"></div>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50 dark:bg-[#1e2124]">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
                             ID
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
                             Usuario
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
                             Email
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
                             Rol
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
                             Puntos
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wider">
                             Acciones
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-white dark:bg-[#1e2124] divide-y divide-gray-200 dark:divide-gray-700">
                         {users.map((u) => (
                           <tr key={u.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                               {u.id}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                               {u.nombre_usuario}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                               {u.email}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                 u.rol === 'admin' ? 'bg-purple-100 text-purple-800' :
                                 u.rol === 'moderador' ? 'bg-blue-100 text-blue-800' :
@@ -350,7 +350,7 @@ const AdminUsers: React.FC = () => {
                                 {u.rol}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                               {u.puntos}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -388,7 +388,7 @@ const AdminUsers: React.FC = () => {
               <form onSubmit={handleSimpleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="simple-nombre_usuario" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="simple-nombre_usuario" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                       Nombre de Usuario
                     </label>
                     <input
@@ -397,12 +397,12 @@ const AdminUsers: React.FC = () => {
                       required
                       value={simpleForm.nombre_usuario}
                       onChange={(e) => setSimpleForm({ ...simpleForm, nombre_usuario: e.target.value })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="simple-email" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="simple-email" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                       Email
                     </label>
                     <input
@@ -411,12 +411,12 @@ const AdminUsers: React.FC = () => {
                       required
                       value={simpleForm.email}
                       onChange={(e) => setSimpleForm({ ...simpleForm, email: e.target.value })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="simple-contraseña" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="simple-contraseña" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                       Contraseña
                     </label>
                     <input
@@ -426,19 +426,19 @@ const AdminUsers: React.FC = () => {
                       minLength={6}
                       value={simpleForm.contraseña}
                       onChange={(e) => setSimpleForm({ ...simpleForm, contraseña: e.target.value })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="simple-rol" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="simple-rol" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                       Rol
                     </label>
                     <select
                       id="simple-rol"
                       value={simpleForm.rol}
                       onChange={(e) => setSimpleForm({ ...simpleForm, rol: e.target.value as any })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     >
                       <option value="usuario">Usuario</option>
                       <option value="moderador">Moderador</option>
@@ -464,10 +464,10 @@ const AdminUsers: React.FC = () => {
               <form onSubmit={handlePreferencesSubmit} className="space-y-6">
                 {/* Datos del Usuario */}
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Datos del Usuario</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">Datos del Usuario</h3>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <div>
-                      <label htmlFor="pref-nombre_usuario" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="pref-nombre_usuario" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                         Nombre de Usuario
                       </label>
                       <input
@@ -476,12 +476,12 @@ const AdminUsers: React.FC = () => {
                         required
                         value={preferencesForm.nombre_usuario}
                         onChange={(e) => setPreferencesForm({ ...preferencesForm, nombre_usuario: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="pref-email" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="pref-email" className="block text-sm font-medium text-gray-900 dark:text-gray-200">  
                         Email
                       </label>
                       <input
@@ -490,12 +490,12 @@ const AdminUsers: React.FC = () => {
                         required
                         value={preferencesForm.email}
                         onChange={(e) => setPreferencesForm({ ...preferencesForm, email: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="pref-contraseña" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="pref-contraseña" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                         Contraseña
                       </label>
                       <input
@@ -505,19 +505,19 @@ const AdminUsers: React.FC = () => {
                         minLength={6}
                         value={preferencesForm.contraseña}
                         onChange={(e) => setPreferencesForm({ ...preferencesForm, contraseña: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="pref-rol" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="pref-rol" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                         Rol
                       </label>
                       <select
                         id="pref-rol"
                         value={preferencesForm.rol}
                         onChange={(e) => setPreferencesForm({ ...preferencesForm, rol: e.target.value as any })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       >
                         <option value="usuario">Usuario</option>
                         <option value="moderador">Moderador</option>
@@ -529,10 +529,10 @@ const AdminUsers: React.FC = () => {
 
                 {/* Preferencias de WooCommerce */}
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Preferencias de WooCommerce</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">Preferencias de WooCommerce</h3>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <div>
-                      <label htmlFor="pref-cliente_key" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="pref-cliente_key" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                         Consumer Key
                       </label>
                       <input
@@ -541,12 +541,12 @@ const AdminUsers: React.FC = () => {
                         required
                         value={preferencesForm.cliente_key}
                         onChange={(e) => setPreferencesForm({ ...preferencesForm, cliente_key: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="pref-cliente_secret" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="pref-cliente_secret" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                         Consumer Secret
                       </label>
                       <input
@@ -555,12 +555,12 @@ const AdminUsers: React.FC = () => {
                         required
                         value={preferencesForm.cliente_secret}
                         onChange={(e) => setPreferencesForm({ ...preferencesForm, cliente_secret: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
 
                     <div className="sm:col-span-2">
-                      <label htmlFor="pref-url_tienda" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="pref-url_tienda" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                         URL de la Tienda
                       </label>
                       <input
@@ -570,12 +570,12 @@ const AdminUsers: React.FC = () => {
                         placeholder="https://mi-tienda.com"
                         value={preferencesForm.url_tienda}
                         onChange={(e) => setPreferencesForm({ ...preferencesForm, url_tienda: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
 
                     <div className="sm:col-span-2">
-                      <label htmlFor="pref-n8n_webhook" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="pref-n8n_webhook" className="block text-sm font-medium text-gray-900 dark:text-gray-200">
                         Webhook de N8N (Opcional)
                       </label>
                       <input
@@ -584,12 +584,12 @@ const AdminUsers: React.FC = () => {
                         placeholder="https://n8n.mi-dominio.com/webhook/..."
                         value={preferencesForm.n8n_webhook}
                         onChange={(e) => setPreferencesForm({ ...preferencesForm, n8n_webhook: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
 
                     <div className="sm:col-span-2">
-                      <label htmlFor="pref-n8n_redes" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="pref-n8n_redes" className="block text-sm font-medium text-gray-900 dark:text-gray-200"> 
                         Webhook de N8N para Redes Sociales (Opcional)
                       </label>
                       <input
@@ -598,7 +598,7 @@ const AdminUsers: React.FC = () => {
                         placeholder="https://n8n.mi-dominio.com/webhook/redes/..."
                         value={preferencesForm.n8n_redes}
                         onChange={(e) => setPreferencesForm({ ...preferencesForm, n8n_redes: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
                   </div>
