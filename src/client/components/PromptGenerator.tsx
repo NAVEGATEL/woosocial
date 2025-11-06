@@ -606,16 +606,6 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
             <AILoader />
           </div>
 
-          {/* Barra de progreso centrada bajo el loader */}
-          <div className="mt-4 mx-auto w-60">
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-              <div className="bg-blue-600 dark:bg-blue-400 h-1 rounded-full animate-pulse w-3/5"></div>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Procesando con IA... Esto es normal, ¡no cierres la ventana!
-            </p>
-          </div>
-
           {/* Mensaje principal */}
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             🎬 Generando tu video...

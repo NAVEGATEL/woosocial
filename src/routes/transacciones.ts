@@ -180,12 +180,14 @@ router.get('/videos', async (req: AuthRequest, res: Response) => {
     console.log(`[VIDEOS] Obteniendo videos para usuario: ${req.user.id}, página: ${page}, por página: ${perPage}`);
     
     // Primero obtener el total de videos para calcular paginación
+    // Excluir transacciones que contengan "Error" en la descripción
     const countSql = `
       SELECT COUNT(*) as total
       FROM transacciones t
       WHERE t.id_usuario = ? 
       AND t.tipo = 'penalizacion' 
       AND t.descripcion LIKE '%Generación de video%'
+      AND t.descripcion NOT LIKE '%Error%'
     `;
     
     const [countRows] = await db.execute(countSql, [req.user.id]) as any[];
@@ -193,6 +195,7 @@ router.get('/videos', async (req: AuthRequest, res: Response) => {
     const totalPages = Math.ceil(totalVideos / perPage);
 
     // Obtener las transacciones de video con paginación
+    // Excluir transacciones que contengan "Error" en la descripción
     const sql = `
       SELECT t.*, u.nombre_usuario, u.email
       FROM transacciones t
@@ -200,6 +203,7 @@ router.get('/videos', async (req: AuthRequest, res: Response) => {
       WHERE t.id_usuario = ?
       AND t.tipo = 'penalizacion'
       AND t.descripcion LIKE '%Generación de video%'
+      AND t.descripcion NOT LIKE '%Error%'
       ORDER BY t.fecha DESC
       LIMIT ${perPage} OFFSET ${offset}
     `;
