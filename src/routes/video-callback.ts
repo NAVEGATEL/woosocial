@@ -234,6 +234,10 @@ router.post('/confirm', async (req: any, res: Response) => {
       console.log(`✅ Transacción guardada con ID: ${result.insertId}, video_id: ${video_id}`);
       console.log(`✅ Video ${video_id} generado exitosamente. Usuario ${user_id} perdió ${points_to_deduct} puntos. Nuevo balance: ${newPoints}`);
 
+      // Generar URL del video
+      const videoBaseUrl = process.env.VIDEO_BASE_URL || 'https://rrss.navegatel.es/vids/';
+      const video_url = `${videoBaseUrl}${video_id}.mp4`;
+
       // Guardar estado del video
       videoStatus.set(video_id, {
         status: 'completed',
@@ -241,11 +245,8 @@ router.post('/confirm', async (req: any, res: Response) => {
         completed_at: new Date(),
         points_deducted: points_to_deduct,
         new_balance: newPoints,
-        video_url: `https://rrss.navegatel.es/vids/${video_id}.mp4`
+        video_url: video_url
       });
-
-      // Generar URL del video
-      const video_url = `https://rrss.navegatel.es/vids/${video_id}.mp4`;
 
       // Notificar al usuario via SSE
       console.log(`📡 Notificando usuario ${user_id} via SSE...`);

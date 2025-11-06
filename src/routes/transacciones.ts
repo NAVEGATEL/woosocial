@@ -233,7 +233,8 @@ router.get('/videos', async (req: AuthRequest, res: Response) => {
         const match = transaccion.descripcion.match(/Generación de video\s+(video_\d+_\S+?)(?:\s|$|-)/i);
         if (match) {
           const video_id = match[1].trim();
-          const video_url = `https://rrss.navegatel.es/vids/${video_id}.mp4`;
+          const videoBaseUrl = process.env.VIDEO_BASE_URL || 'https://rrss.navegatel.es/vids/';
+          const video_url = `${videoBaseUrl}${video_id}.mp4`;
           
           // Log para debuggear la extracción
           console.log(`[VIDEOS] Extraído video_id: "${video_id}" de descripción: "${transaccion.descripcion}"`);
@@ -308,10 +309,11 @@ router.get('/publicaciones', async (req: AuthRequest, res: Response) => {
             video_id = video_id.replace(/\.mp4$/, '');
           }
           
+          const videoBaseUrl = process.env.VIDEO_BASE_URL || 'https://rrss.navegatel.es/vids/';
           return {
             id: row.id,
             video_id,
-            video_url: `https://rrss.navegatel.es/vids/${video_id}.mp4`,
+            video_url: `${videoBaseUrl}${video_id}.mp4`,
             plataforma,
             fecha: row.fecha,
             descripcion: row.descripcion
