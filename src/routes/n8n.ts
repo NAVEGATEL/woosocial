@@ -68,7 +68,12 @@ router.post('/webhook', authenticateToken, async (req: AuthRequest, res: Respons
     const n8nWebhookUrl = normalizeWebhookUrl(preferencias.n8n_webhook);
 
     // URLs de callback para que N8N pueda notificar el resultado
-    const baseUrl = process.env.BASE_URL || 'http://192.168.1.138:3000';
+    const baseUrl = process.env.BASE_URL;
+    if (!baseUrl) {
+      return res.status(500).json({ 
+        error: 'BASE_URL no está configurada en las variables de entorno' 
+      });
+    }
     const callbackUrlConfirm = `${baseUrl}/api/video-callback/confirm`;
     const callbackUrlError = `${baseUrl}/api/video-callback/error`;
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaInstagram, FaTiktok, FaFacebook, FaMobileAlt } from 'react-icons/fa';
 import { Video } from '../types';
 import { apiService } from '../services/api';
+import AILoader from './AILoader';
 
 interface WooCommerceProduct {
   id: number;
@@ -424,7 +425,7 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Seleccionar Redes Sociales</h3>
                 {loadingConnections ? (
                   <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                    <AILoader className="w-24 h-24 mx-auto" />
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Cargando conexiones...</p>
                   </div>
                 ) : platforms.length === 0 ? (

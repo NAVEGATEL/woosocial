@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { apiService } from '../services/api';
 import { Transaccion, TransaccionForm, TransaccionStats } from '../types';
+import AILoader from '../components/AILoader';
 import toast from 'react-hot-toast';
 
 const Transacciones: React.FC = () => {
@@ -139,9 +140,9 @@ const Transacciones: React.FC = () => {
   if (loading) {
     return (
       <div className=" min-h-screen p-6 -mx-6 -mt-6 mb-6 flex items-center justify-center">
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-200">Cargando transacciones...</span>
+        <div className="flex flex-col items-center justify-center py-8">
+          <AILoader />
+          <span className="mt-4 text-gray-600 dark:text-white">Cargando transacciones...</span>
         </div>
       </div>
     );

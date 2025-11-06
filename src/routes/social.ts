@@ -261,7 +261,8 @@ router.post(
       const { plataforma, access_token } = req.body as { plataforma: 'instagram' | 'facebook'; access_token: string };
 
       if (plataforma === 'facebook') {
-        const url = `https://graph.facebook.com/v18.0/me?access_token=${encodeURIComponent(access_token)}`;
+        const facebookApiUrl = process.env.FACEBOOK_GRAPH_API_URL || 'https://graph.facebook.com/v18.0';
+        const url = `${facebookApiUrl}/me?access_token=${encodeURIComponent(access_token)}`;
         const r = await fetch(url);
         const data = await r.json() as any;
         if (!r.ok) {
@@ -271,7 +272,8 @@ router.post(
       }
 
       if (plataforma === 'instagram') {
-        const url = `https://graph.instagram.com/me?fields=id,username&access_token=${encodeURIComponent(access_token)}`;
+        const instagramApiUrl = process.env.INSTAGRAM_GRAPH_API_URL || 'https://graph.instagram.com';
+        const url = `${instagramApiUrl}/me?fields=id,username&access_token=${encodeURIComponent(access_token)}`;
         const r = await fetch(url);
         const data = await r.json() as any;
         if (!r.ok) {
@@ -293,12 +295,13 @@ router.get('/tiktok/auth', (req: AuthRequest, res: Response) => {
   const redirectUri = process.env.TIKTOK_REDIRECT_URI; // Debe coincidir con el configurado en TikTok Dev Portal
   const scopes = (process.env.TIKTOK_SCOPES || 'user.info.basic').split(',').join('%20');
   const state = encodeURIComponent(Math.random().toString(36).slice(2));
+  const tiktokAuthUrl = process.env.TIKTOK_AUTH_URL || 'https://www.tiktok.com/v2/auth/authorize/';
 
   if (!clientKey || !redirectUri) {
     return res.status(500).json({ error: 'Faltan variables de entorno TIKTOK_CLIENT_KEY/TIKTOK_REDIRECT_URI' });
   }
 
-  const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${encodeURIComponent(clientKey)}&response_type=code&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+  const authUrl = `${tiktokAuthUrl}?client_key=${encodeURIComponent(clientKey)}&response_type=code&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
   res.redirect(authUrl);
 });
 
@@ -321,8 +324,11 @@ router.get('/tiktok/callback', async (req: AuthRequest, res: Response) => {
       return res.status(500).json({ error: 'Faltan variables de entorno TIKTOK_CLIENT_KEY/TIKTOK_CLIENT_SECRET/TIKTOK_REDIRECT_URI' });
     }
 
+    // URL base de la API de TikTok (se usa en múltiples llamadas)
+    const tiktokApiUrl = process.env.TIKTOK_API_URL || 'https://open.tiktokapis.com/v2';
+
     // Intercambiar code por access_token
-    const tokenResp = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+    const tokenResp = await fetch(`${tiktokApiUrl}/oauth/token/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: qs.stringify({
@@ -346,7 +352,7 @@ router.get('/tiktok/callback', async (req: AuthRequest, res: Response) => {
     const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000).toISOString() : null;
 
     // Obtener perfil básico
-    const meResp = await fetch('https://open.tiktokapis.com/v2/user/info/?fields=open_id,avatar_url,display_name', {
+    const meResp = await fetch(`${tiktokApiUrl}/user/info/?fields=open_id,avatar_url,display_name`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const meData = await meResp.json() as any;

@@ -5,6 +5,7 @@ import { FaInstagram, FaTiktok, FaFacebook } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import SocialConnectModal from '../components/SocialConnectModal';
 import ConnectInfoModal from '../components/ConnectInfoModal';
+import AILoader from '../components/AILoader';
 import toast from 'react-hot-toast';
 import StoreConnectionStatus from '../components/StoreConnectionStatus';
 
@@ -216,7 +217,7 @@ const Preferencias: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <AILoader />
       </div>
     );
   }

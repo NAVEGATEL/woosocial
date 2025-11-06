@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
@@ -19,6 +19,13 @@ const Login: React.FC = () => {
 
   const from = location.state?.from?.pathname || '/dashboard';
 
+  // Debug: Log cuando cambia el error
+  useEffect(() => {
+    if (error) {
+      console.log('Error mostrado en Login:', error);
+    }
+  }, [error]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -26,8 +33,10 @@ const Login: React.FC = () => {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     setError('');
     setLoading(true);
 
@@ -35,8 +44,28 @@ const Login: React.FC = () => {
       await login(formData.email, formData.contraseña);
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
-    } finally {
+      console.error('Error en login:', err);
+      
+      // Determinar el mensaje de error apropiado
+      const errorMessage = err?.message || err?.toString() || '';
+      let displayMessage = 'Error al iniciar sesión';
+      
+      // Verificar si es un error de credenciales incorrectas
+      const lowerMessage = errorMessage.toLowerCase();
+      if (
+        lowerMessage.includes('credenciales') ||
+        lowerMessage.includes('incorrectas') ||
+        lowerMessage.includes('invalid') ||
+        lowerMessage.includes('401') ||
+        lowerMessage.includes('unauthorized') ||
+        lowerMessage.includes('email o contraseña')
+      ) {
+        displayMessage = 'Credenciales incorrectas';
+      } else if (errorMessage) {
+        displayMessage = errorMessage;
+      }
+      
+      setError(displayMessage);
       setLoading(false);
     }
   };
@@ -57,10 +86,23 @@ const Login: React.FC = () => {
           </h2>
         </div>
         
-        <form className="mt-4 space-y-6" onSubmit={handleSubmit}>
+        <form 
+          className="mt-4 space-y-6" 
+          onSubmit={handleSubmit} 
+          noValidate
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && loading) {
+              e.preventDefault();
+            }
+          }}
+        >
           {error && (
-            <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-200 px-4 py-3 rounded-md">
-              {error}
+            <div 
+              className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-200 px-4 py-3 rounded-md text-sm"
+              role="alert"
+              aria-live="assertive"
+            >
+              <strong>Error:</strong> {error}
             </div>
           )}
           
@@ -102,6 +144,12 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
+              onClick={(e) => {
+                if (loading) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
