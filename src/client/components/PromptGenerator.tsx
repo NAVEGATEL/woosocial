@@ -152,6 +152,7 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
   const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(null);
   const [selectedQuality, setSelectedQuality] = useState<'720' | '1080'>('1080');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [optionalPromptText, setOptionalPromptText] = useState<string>('');
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSendingToWebhook, setIsSendingToWebhook] = useState(false);
@@ -177,11 +178,17 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
     ? promptTemplates
     : promptTemplates.filter(template => template.category === selectedCategory);
 
+  const getSampleVideoUrl = (template: PromptTemplate | null): string => {
+    if (!template) return '';
+
+    return 'https://www.youtube.com/embed/haJfJAwpViI';
+  };
+
   useEffect(() => {
     if (selectedTemplate) {
       generatePrompt();
     }
-  }, [selectedTemplate, selectedQuality]);
+  }, [selectedTemplate, selectedQuality, optionalPromptText]);
 
   // Cargar preferencias del usuario para obtener la URL del webhook
   useEffect(() => {
@@ -371,14 +378,14 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
   }, [user?.id, isProcessingVideo, videoId]);
 
   const generatePrompt = () => {
-    if (!selectedProduct) return;
+    if (!selectedProduct || !selectedTemplate) return;
 
     setIsGenerating(true);
 
     // Simular un pequeño delay para la generación
     setTimeout(() => {
       let prompt = selectedTemplate.template;
-      
+
       // Reemplazar placeholders con información del producto
       prompt = prompt.replace(/\[Prenda\/objeto detectado\]/g, selectedProduct.name);
       prompt = prompt.replace(/\[Producto\]/g, selectedProduct.name);
@@ -435,6 +442,11 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
           'Format: 9:16 (Vertical), 1080×1920, 24 fps.\n' +
           'Audio: Minimal ambient.\n'
         );
+      }
+
+      // Añadir texto opcional del usuario al final del prompt si existe
+      if (optionalPromptText.trim()) {
+        prompt = prompt + '\n\n' + optionalPromptText.trim();
       }
 
       setGeneratedPrompt(prompt);
@@ -780,6 +792,7 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
                 setSelectedTemplate(null);
                 setSelectedQuality('1080');
                 setSelectedCategory('all');
+                setOptionalPromptText('');
                 setGeneratedPrompt('');
                 setWebhookStatus('idle');
                 setVideoId('');
@@ -792,7 +805,7 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
               </svg>
               Generar Otro Video
             </button>
-            
+
             <p className="text-xs text-gray-500">
               El mensaje se cerrará automáticamente en unos segundos
             </p>
@@ -804,16 +817,16 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-600">
-     
+
 
 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
-        
+
         <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-300 mb-4">
-        Generador de Prompts
-      </h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-300 mb-2">
+            Generador de Prompts
+          </h3>
           {/* Información del producto seleccionado */}
           <div className="mb-6 p-4 bg-purple-50 border border-purple-200 dark:border-purple-600 dark:bg-purple-700/50 rounded-lg ">
             <div className="flex items-start space-x-3">
@@ -851,8 +864,8 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
 
 
           {/* Selector de calidad */}
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="mb-3 ">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 mt-2">
               Calidad de Video
             </label>
             <div className="flex space-x-4">
@@ -878,7 +891,55 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
               </label>
             </div>
           </div>
-          {/* Selector de categoría de templates (estilo igual a filtros de ProductGrid) */}
+
+          {/* Input para texto opcional adicional */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Instrucciones Adicionales (Opcional)
+            </label>
+            <input
+              type="text"
+              value={optionalPromptText}
+              onChange={(e) => setOptionalPromptText(e.target.value)}
+              placeholder="Añade instrucciones adicionales para la generación del video..."
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Este texto se añadirá al final del prompt generado para personalizar la generación.
+            </p>
+          </div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Template de Prompt
+          </label>
+          <select
+            value={selectedTemplate?.id || ''}
+            onChange={(e) => {
+              const template = filteredTemplates.find(t => t.id === e.target.value);
+              setSelectedTemplate(template || null);
+            }}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Selecciona un template...</option>
+            {filteredTemplates.map((template) => {
+              // Extraer la categoría (parte antes del "|")
+              const category = template.name.split('|')[0]?.trim() || template.name;
+              return (
+                <option key={template.id} value={template.id}>
+                  {category}
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Bloque con la descripción del template seleccionado */}
+          {selectedTemplate && (
+            <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                {selectedTemplate.description}
+              </p>
+            </div>
+          )}
+          {/* Selector de categoría de templates (estilo igual a filtros de ProductGrid)
           <div className="mb-6">
             <CategoryDropdown
               label="Categoría de Template"
@@ -893,164 +954,118 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
               }))}
               onSelect={(val) => setSelectedCategory(val)}
             />
-          </div>
+          </div> */}
 
 
 
         </div>
-        {/* Editor principal de prompt: siempre visible y editable */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Prompt
-          </label>
-          <textarea
-            value={generatedPrompt}
-            onChange={(e) => setGeneratedPrompt(e.target.value)}
-            placeholder="Selecciona un template o escribe tu prompt aquí..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 dark:text-white"
-            rows={10}
-          />
-          {/* Acciones para el prompt */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Puedes editar el texto antes de generar.</span>
-              <button
-                onClick={copyToClipboard}
-                className="dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Copiar
-              </button>
-            </div>
-            {isGenerating && (
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span>Generando...</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+        {/* Selector de template */}
 
-      {/* Selector de template */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Template de Prompt
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredTemplates.map((template) => (
-            <div
-              key={template.id}
-              onClick={() => setSelectedTemplate(template)}
-              className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                selectedTemplate?.id === template.id
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/50 ring-2 ring-purple-200'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">{template.name}</h4>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{template.description}</p>
-                  <span className="inline-block mt-2 px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full">
-                    {template.category}
-                  </span>
+        <div className="flex flex-col justify-between">
+          {/* Bloque de video de muestra */}
+          {selectedTemplate && (
+            <div className=" w-[100%]">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                Video de Muestra
+              </label>
+              <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    className="absolute top-0 left-0 w-full h-full rounded-lg"
+                    src={getSampleVideoUrl(selectedTemplate)}
+                    title={`Video de muestra - ${selectedTemplate.name}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
                 </div>
-                {/* Icono de selección 
-                {selectedTemplate?.id === template.id && (
-                  <div className="flex-shrink-0 ml-2">
-                    <div className="w-6 h-6 bg-blue-500 dark:bg-blue-400 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+                  Este es un ejemplo del tipo de video que se generará
+                </p>
+              </div>
+            </div>
+          )}
+          {/* Botón Generar y Estado del Webhook */}
+          <div className="">
+            <div className="flex items-center justify-end">
+              <div className="flex-1">
+                {webhookStatus === 'success' && (
+                  <div className="flex items-center text-green-600 mb-4">
+                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-sm font-medium">¡Enviado exitosamente a N8N!</span>
                   </div>
                 )}
-*/}
+
+                {webhookStatus === 'error' && (
+                  <div className="flex items-center text-red-600 mb-4">
+                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span className="text-sm font-medium">Error al enviar. Intenta de nuevo.</span>
+                  </div>
+                )}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Botón Generar y Estado del Webhook */}
-      <div className="mt-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            {webhookStatus === 'success' && (
-              <div className="flex items-center text-green-600 mb-4">
-                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm font-medium">¡Enviado exitosamente a N8N!</span>
-              </div>
-            )}
-
-            {webhookStatus === 'error' && (
-              <div className="flex items-center text-red-600 mb-4">
-                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span className="text-sm font-medium">Error al enviar. Intenta de nuevo.</span>
-              </div>
+            <div className="flex flex-col items-end">
+              <span className="text-sm font-medium text-blue-800 dark:text-blue-400">
+                Puntos disponibles: {isCheckingPoints ? '...' : userPoints}
+              </span>
+              <button
+                onClick={sendToWebhook}
+                disabled={isSendingToWebhook || !selectedTemplate || !n8nWebhookUrl || isLoadingPreferences || !canGenerate || isCheckingPoints || !generatedPrompt || !generatedPrompt.trim()}
+                className="w-[fit-content] inline-flex items-center justify-center px-3 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                {isLoadingPreferences ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Cargando configuración...
+                  </>
+                ) : isCheckingPoints ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Verificando puntos...
+                  </>
+                ) : isSendingToWebhook ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Enviando...
+                  </>
+                ) : !canGenerate ? (
+                  <>
+                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    Sin puntos suficientes
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Generar Video (10 pts)
+                  </>
+                )}
+              </button>
+            </div>
+            {!n8nWebhookUrl && !isLoadingPreferences && (
+              <p className="mt-2 text-sm text-red-600 text-right">
+                ⚠️ No se ha configurado la URL del webhook de N8N.
+                <a href="/preferencias" className="underline font-medium ml-1">
+                  Ve a Preferencias para configurarlo
+                </a>
+              </p>
             )}
           </div>
         </div>
 
-        <div className="flex flex-col ">
-          <span className="text-sm font-medium text-blue-800 dark:text-blue-400">
-            Puntos disponibles: {isCheckingPoints ? '...' : userPoints}
-          </span>
-          <button
-            onClick={sendToWebhook}
-            disabled={isSendingToWebhook || !selectedTemplate || !n8nWebhookUrl || isLoadingPreferences || !canGenerate || isCheckingPoints || !generatedPrompt || !generatedPrompt.trim()}
-            className="w-[fit-content] inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-          >
-            {isLoadingPreferences ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Cargando configuración...
-              </>
-            ) : isCheckingPoints ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Verificando puntos...
-              </>
-            ) : isSendingToWebhook ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Enviando...
-              </>
-            ) : !canGenerate ? (
-              <>
-                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                Sin puntos suficientes
-              </>
-            ) : (
-              <>
-                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                Generar Video (10 pts)
-              </>
-            )}
-          </button>
-        </div>
 
-
-        {!n8nWebhookUrl && !isLoadingPreferences && (
-          <p className="mt-2 text-sm text-red-600">
-            ⚠️ No se ha configurado la URL del webhook de N8N.
-            <a href="/preferencias" className="underline font-medium ml-1">
-              Ve a Preferencias para configurarlo
-            </a>
-          </p>
-        )}
       </div>
+
+
+
+
     </div>
   );
 };
