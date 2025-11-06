@@ -185,6 +185,18 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
     return 'https://www.youtube.com/embed/haJfJAwpViI';
   };
 
+  // Seleccionar automáticamente el primer template de "Moda" al cargar
+  useEffect(() => {
+    if (!selectedTemplate) {
+      const modaTemplate = promptTemplates.find(template => 
+        template.name.toLowerCase().includes('moda')
+      );
+      if (modaTemplate) {
+        setSelectedTemplate(modaTemplate);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (selectedTemplate) {
       generatePrompt();
@@ -934,28 +946,22 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
         {/* Selector de template */}
 
         <div className="flex flex-col justify-between">
-          {/* Bloque de video de muestra */}
-          {selectedTemplate && (
-            <div className=" w-[100%]">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-                Video de Muestra
-              </label>
-              <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                  <iframe
-                    className="absolute top-0 left-0 w-full h-full rounded-lg"
-                    src={getSampleVideoUrl(selectedTemplate)}
-                    title={`Video de muestra - ${selectedTemplate.name}`}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
+          {/* Bloque de video de muestra - siempre visible */}
+          <div className=" w-[100%]">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+              Video de Muestra
+            </label>
+            <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <div className="absolute top-0 left-0 w-full h-full rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                  {/* Cuadro vacío - placeholder para video de ejemplo */}
                 </div>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
-                  Este es un ejemplo del tipo de video que se generará
-                </p>
               </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+                Este es un ejemplo del tipo de video que se generará
+              </p>
             </div>
-          )}
+          </div>
           {/* Botón Generar y Estado del Webhook */}
           <div className="">
             <div className="flex items-center justify-end">
