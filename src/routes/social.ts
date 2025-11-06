@@ -5,8 +5,34 @@ import { SocialMediaService } from '../services/socialMediaService';
 import { PreferenciasService } from '../services/preferenciasService';
 import { SocialPlatformId } from '../models/SocialMedia';
 import qs from 'querystring';
+import * as fs from 'fs';
 
 const router = Router();
+
+// Función para detectar si estamos corriendo en Docker
+const isRunningInDocker = (): boolean => {
+  try {
+    // Verificar si existe el archivo .dockerenv (presente en contenedores Docker)
+    return fs.existsSync('/.dockerenv');
+  } catch {
+    return false;
+  }
+};
+
+// Función para normalizar la URL del webhook de N8N
+// Si estamos en Docker y la URL usa localhost, la transforma a host.docker.internal
+const normalizeWebhookUrl = (url: string): string => {
+  if (!url) return url;
+  
+  // Si estamos en Docker y la URL contiene localhost o 127.0.0.1
+  if (isRunningInDocker() && (url.includes('localhost') || url.includes('127.0.0.1'))) {
+    const normalizedUrl = url.replace(/localhost/g, 'host.docker.internal').replace(/127\.0\.0\.1/g, 'host.docker.internal');
+    console.log(`🔄 URL normalizada para Docker: ${url} -> ${normalizedUrl}`);
+    return normalizedUrl;
+  }
+  
+  return url;
+};
 
 // Autenticación requerida
 router.use(authenticateToken);
@@ -100,6 +126,8 @@ router.post(
     body('message').isString().optional(),
   ],
   async (req: AuthRequest, res: Response) => {
+    let preferencias: any = null; // Declarar fuera del try para que esté disponible en el catch
+    
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -111,10 +139,11 @@ router.post(
       }
 
       const { video_id, social_platforms, message } = req.body;
-      const videoName = `${video_id}.mp4`;
+      // Enviar fileName sin la extensión .mp4
+      const fileName = video_id;
 
       // Obtener preferencias del usuario para usar el webhook n8n_redes
-      const preferencias = await PreferenciasService.getPreferenciasByUserId(req.user.id);
+      preferencias = await PreferenciasService.getPreferenciasByUserId(req.user.id);
       
       if (!preferencias || !preferencias.n8n_redes) {
         return res.status(400).json({ 
@@ -122,11 +151,11 @@ router.post(
         });
       }
 
-      const webhookUrl = preferencias.n8n_redes;
+      const webhookUrl = normalizeWebhookUrl(preferencias.n8n_redes);
 
       // Preparar datos para el webhook - cada plataforma como campo separado
       const webhookData: any = {
-        video_name: videoName,
+        fileName: fileName,
         user_id: req.user.id,
         message: message || ''
       };
@@ -140,14 +169,27 @@ router.post(
         };
       });
 
-      // Enviar POST al webhook de n8n
+      console.log('📤 Enviando publicación a N8N:', {
+        user_id: req.user.id,
+        fileName: fileName,
+        platforms: social_platforms.map((sp: any) => sp.plataforma),
+        webhookUrl: webhookUrl
+      });
+
+      // Enviar POST al webhook de n8n con timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
+
       const webhookResponse = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(webhookData)
+        body: JSON.stringify(webhookData),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!webhookResponse.ok) {
         const errorText = await webhookResponse.text();
@@ -160,15 +202,43 @@ router.post(
         success: true,
         message: 'Publicación enviada exitosamente',
         data: {
-          video_name: videoName,
+          fileName: fileName,
           social_platforms: social_platforms,
           webhook_response: webhookResult
         }
       });
     } catch (error: any) {
-      console.error('Error al publicar en redes sociales:', error);
+      console.error('❌ Error al publicar en redes sociales:', error);
+      
+      // Determinar el tipo de error y proporcionar mensaje más útil
+      let errorMessage = 'Error al enviar publicación al webhook';
+      let errorDetails = error.message;
+
+      if (error.code === 'ECONNREFUSED' || error.cause?.code === 'ECONNREFUSED') {
+        errorMessage = 'No se pudo conectar al servidor de N8N';
+        errorDetails = `El servidor no puede alcanzar el webhook de N8N para redes sociales. `;
+        
+        // Si está en Docker y usa localhost, sugerir solución
+        const webhookUrl = preferencias?.n8n_redes || '';
+        if (webhookUrl.includes('localhost') || webhookUrl.includes('127.0.0.1')) {
+          errorDetails += 'Si estás usando Docker, cambia "localhost" por "host.docker.internal" o la IP del host en la URL del webhook de N8N para redes sociales en tus preferencias.';
+        } else {
+          errorDetails += 'Verifica que N8N esté corriendo y que la URL sea accesible desde el servidor.';
+        }
+      } else if (error.name === 'AbortError') {
+        errorMessage = 'Timeout al conectar con N8N';
+        errorDetails = 'El servidor de N8N no respondió en 30 segundos. Verifica que esté funcionando correctamente.';
+      }
+
+      console.error('Detalles del error:', {
+        code: error.code || error.cause?.code,
+        message: error.message,
+        webhookUrl: preferencias?.n8n_redes
+      });
+
       res.status(500).json({ 
-        error: error.message || 'Error al enviar publicación al webhook' 
+        error: errorMessage,
+        details: errorDetails
       });
     }
   }
