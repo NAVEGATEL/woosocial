@@ -24,6 +24,7 @@ const Mensajes: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMensaje, setSelectedMensaje] = useState<Mensaje | null>(null);
+  const [mensajesCargados, setMensajesCargados] = useState(false);
   
   // Filtros
   const [filtroTipo, setFiltroTipo] = useState<string>('');
@@ -45,8 +46,13 @@ const Mensajes: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+      setMensajesCargados(false);
       const response = await apiService.getMessages();
       setMensajes(response.messages);
+      // Pequeño delay para activar la animación después de que los datos estén listos
+      setTimeout(() => {
+        setMensajesCargados(true);
+      }, 50);
     } catch (err: any) {
       setError(err.message || 'Error al cargar mensajes');
       toast.error('Error al cargar mensajes');
@@ -150,6 +156,14 @@ const Mensajes: React.FC = () => {
     return matchTipo && matchBusqueda;
   });
 
+  // Animar cuando cambian los filtros
+  useEffect(() => {
+    setMensajesCargados(false);
+    setTimeout(() => {
+      setMensajesCargados(true);
+    }, 50);
+  }, [filtroTipo, busqueda]);
+
   if (user?.rol !== 'admin') {
     return (
       <div className="text-center py-12">
@@ -227,11 +241,14 @@ const Mensajes: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {mensajesFiltrados.map((mensaje) => (
+          {mensajesFiltrados.map((mensaje, index) => (
             <div
               key={mensaje.id}
-              className="bg-white dark:bg-[#1e2124] rounded-lg border border-gray-200 dark:border-gray-600 p-4 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white dark:bg-[#1e2124] rounded-lg border border-gray-200 dark:border-gray-600 p-4 hover:shadow-md transition-shadow cursor-pointer message-item hover:bg-gray-50 dark:hover:border-gray-100"
               onClick={() => handleOpenMessage(mensaje)}
+              style={{
+                animationDelay: mensajesCargados ? `${index * 0.1}s` : '0s'
+              }}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

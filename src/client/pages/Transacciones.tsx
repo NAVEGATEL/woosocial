@@ -284,8 +284,7 @@ const Transacciones: React.FC = () => {
       )}
 
       {/* Filtros */}
-      <div className="bg-white dark:bg-[#1e2124] shadow rounded-lg p-6 border dark:border-gray-700">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">Filtros</h3>
+      <div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-1">
@@ -305,14 +304,14 @@ const Transacciones: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-1">
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-1 ">
               Fecha Desde
             </label>
             <input
               type="date"
               value={filters.fecha_desde}
               onChange={(e) => setFilters({ ...filters, fecha_desde: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 w-[150px]"
             />
           </div>
           <div>
@@ -394,22 +393,20 @@ const Transacciones: React.FC = () => {
                       {transaccion.usuario?.nombre_usuario || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        transaccion.tipo === 'bonificacion' ? 'bg-green-100 text-green-800' :
-                        transaccion.tipo === 'penalizacion' ? 'bg-red-100 text-red-800' :
-                        transaccion.tipo === 'compra' ? 'bg-blue-100 text-blue-800' :
-                        transaccion.tipo === 'venta' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${transaccion.tipo === 'bonificacion' ? 'bg-green-100 text-green-800' :
+                          transaccion.tipo === 'penalizacion' ? 'bg-red-100 text-red-800' :
+                            transaccion.tipo === 'compra' ? 'bg-blue-100 text-blue-800' :
+                              transaccion.tipo === 'venta' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                        }`}>
                         {transaccion.tipo}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                       {transaccion.descripcion}
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                      transaccion.cantidad_puntos > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${transaccion.cantidad_puntos > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
                       {transaccion.cantidad_puntos > 0 ? '+' : ''}{transaccion.cantidad_puntos}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

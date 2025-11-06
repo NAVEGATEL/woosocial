@@ -81,11 +81,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (!isMenuOpen) return;
-      
+
       const target = event.target as Node;
       const menuElement = menuRef.current;
       const buttonElement = menuButtonRef.current;
-      
+
       // Si el clic fue fuera del menú y del botón, cerrar el menú
       if (
         menuElement &&
@@ -101,7 +101,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       // Agregar listeners cuando el menú está abierto
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
-      
+
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
         document.removeEventListener('touchstart', handleClickOutside);
@@ -114,7 +114,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Esto evita que el contenido se mueva cuando aparece/desaparece el scrollbar
     if (CSS.supports('scrollbar-gutter', 'stable')) {
       document.documentElement.style.scrollbarGutter = 'stable';
-      
+
       return () => {
         document.documentElement.style.scrollbarGutter = '';
       };
@@ -124,7 +124,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       const htmlElement = document.documentElement;
       const originalOverflow = htmlElement.style.overflowY;
       htmlElement.style.overflowY = 'scroll';
-      
+
       return () => {
         htmlElement.style.overflowY = originalOverflow;
       };
@@ -134,7 +134,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col color-fondo">
       {/* Header */}
-      <header 
+      <header
         className={`bg-white dark:bg-[#1e2124] sticky top-0 z-50 relative ${theme === 'dark' ? 'border-b border-gray-700' : 'shadow-md'}`}
       >
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
@@ -142,10 +142,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Logo */}
             <div className="flex items-center w-[360px]">
               <Link to="/" className="text-xl font-bold text-gray-900 dark:text-white">
-                <img 
-                  src={theme === 'dark' ? "src/client/assets/img/WooVideoDarkMode.svg" : "src/client/assets/img/WooVideo.svg"} 
-                  alt="WooVideo" 
-                  className="w-[120px] sm:w-[150px]" 
+                <img
+                  src={theme === 'dark' ? "src/client/assets/img/WooVideoDarkMode.svg" : "src/client/assets/img/WooVideo.svg"}
+                  alt="WooVideo"
+                  className="w-[120px] sm:w-[150px]"
                 />
               </Link>
             </div>
@@ -156,11 +156,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link
                   to="/dashboard"
                   ref={(el) => (linkRefs.current['/dashboard'] = el)}
-                  className={`px-3 py-2 text-sm font-medium ${
-                    isActive('/dashboard') 
-                      ? 'text-gray-900 dark:text-white' 
+                  className={`px-3 py-2 text-sm font-medium ${isActive('/dashboard')
+                      ? 'text-gray-900 dark:text-white'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
+                    }`}
                 >
                   Dashboard
                 </Link>
@@ -169,33 +168,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <Link
                       to="/generaciones"
                       ref={(el) => (linkRefs.current['/generaciones'] = el)}
-                      className={`px-3 py-2 text-sm font-medium ${
-                        isActive('/generaciones') 
-                          ? 'text-gray-900 dark:text-white' 
+                      className={`px-3 py-2 text-sm font-medium ${isActive('/generaciones')
+                          ? 'text-gray-900 dark:text-white'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                        }`}
                     >
                       Generaciones
                     </Link>
                     <Link
                       to="/publicaciones"
                       ref={(el) => (linkRefs.current['/publicaciones'] = el)}
-                      className={`px-3 py-2 text-sm font-medium ${
-                        isActive('/publicaciones') 
-                          ? 'text-gray-900 dark:text-white' 
+                      className={`px-3 py-2 text-sm font-medium ${isActive('/publicaciones')
+                          ? 'text-gray-900 dark:text-white'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                        }`}
                     >
                       Publicaciones
                     </Link>
                     <Link
                       to="/comunicados"
                       ref={(el) => (linkRefs.current['/comunicados'] = el)}
-                      className={`px-3 py-2 text-sm font-medium ${
-                        isActive('/comunicados') 
-                          ? 'text-gray-900 dark:text-white' 
+                      className={`px-3 py-2 text-sm font-medium ${isActive('/comunicados')
+                          ? 'text-gray-900 dark:text-white'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                        }`}
                     >
                       Comunicados
                     </Link>
@@ -206,22 +202,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <Link
                       to="/transacciones"
                       ref={(el) => (linkRefs.current['/transacciones'] = el)}
-                      className={`px-3 py-2 text-sm font-medium ${
-                        isActive('/transacciones') 
-                          ? 'text-gray-900 dark:text-white' 
+                      className={`px-3 py-2 text-sm font-medium ${isActive('/transacciones')
+                          ? 'text-gray-900 dark:text-white'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                        }`}
                     >
                       Transacciones
                     </Link>
                     <Link
                       to="/mensajes"
                       ref={(el) => (linkRefs.current['/mensajes'] = el)}
-                      className={`px-3 py-2 text-sm font-medium ${
-                        isActive('/mensajes') 
-                          ? 'text-gray-900 dark:text-white' 
+                      className={`px-3 py-2 text-sm font-medium ${isActive('/mensajes')
+                          ? 'text-gray-900 dark:text-white'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                        }`}
                     >
                       Mensajes
                     </Link>
@@ -230,11 +224,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link
                   to="/preferencias"
                   ref={(el) => (linkRefs.current['/preferencias'] = el)}
-                  className={`px-3 py-2 text-sm font-medium ${
-                    isActive('/preferencias') 
-                      ? 'text-gray-900 dark:text-white' 
+                  className={`px-3 py-2 text-sm font-medium ${isActive('/preferencias')
+                      ? 'text-gray-900 dark:text-white'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
+                    }`}
                 >
                   Preferencias
                 </Link>
@@ -261,7 +254,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <span className="font-medium text-gray-900 dark:text-white">{user.puntos}</span>
                     <span className="text-gray-600 dark:text-gray-400 ml-1">pts.</span>
                   </div>
-                  
+
                   {/* Botón de toggle de tema */}
                   <button
                     onClick={toggleTheme}
@@ -275,7 +268,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       <MdDarkMode className="w-5 h-5" />
                     )}
                   </button>
-                  
+
                   {/* Botón comprar */}
                   {user.rol !== 'admin' && (
                     <button
@@ -286,7 +279,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       <span className="hidden sm:inline">Comprar</span>
                     </button>
                   )}
-                  
+
                   {/* Botón cerrar sesión - visible solo en desktop */}
                   <button
                     onClick={logout}
@@ -315,7 +308,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               ) : (
                 <Link
                   to="/login"
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-white px-2 py-2 rounded-md text-sm font-medium h-[40px] border border-gray-300 dark:border-gray-600 w-[fit-content] bg-green-600 hover:bg-green-700"
                 >
                   Iniciar Sesión
                 </Link>
@@ -326,23 +319,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         {/* Menú hamburguesa desplegable - solo visible en móvil/tablet */}
         {user && (
-          <div 
+          <div
             ref={menuRef}
-            className={`lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-[#1e2124] border-t border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden transition-all duration-300 ease-in-out ${
-              isMenuOpen 
-                ? 'max-h-screen opacity-100 translate-y-0' 
+            className={`lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-[#1e2124] border-t border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen
+                ? 'max-h-screen opacity-100 translate-y-0'
                 : 'max-h-0 opacity-0 -translate-y-4'
-            }`}
+              }`}
           >
             <nav className="flex flex-col">
               <Link
                 to="/dashboard"
                 onClick={() => setIsMenuOpen(false)}
-                className={`px-4 py-3 text-base font-medium  ${
-                  isActive('/dashboard') 
-                    ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
+                className={`px-4 py-3 text-base font-medium  ${isActive('/dashboard')
+                    ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
+                  }`}
               >
                 Dashboard
               </Link>
@@ -351,33 +342,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Link
                     to="/generaciones"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`px-4 py-3 text-base font-medium ${
-                      isActive('/generaciones')
-                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                    }`}
+                    className={`px-4 py-3 text-base font-medium ${isActive('/generaciones')
+                        ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                      }`}
                   >
                     Generaciones
                   </Link>
                   <Link
                     to="/publicaciones"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`px-4 py-3 text-base font-medium ${
-                      isActive('/publicaciones')
-                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                    }`}
+                    className={`px-4 py-3 text-base font-medium ${isActive('/publicaciones')
+                        ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                      }`}
                   >
                     Publicaciones
                   </Link>
                   <Link
                     to="/comunicados"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`px-4 py-3 text-base font-medium ${
-                      isActive('/comunicados')
-                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                    }`}
+                    className={`px-4 py-3 text-base font-medium ${isActive('/comunicados')
+                        ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                      }`}
                   >
                     Comunicados
                   </Link>
@@ -388,22 +376,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Link
                     to="/transacciones"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`px-4 py-3 text-base font-medium ${
-                      isActive('/transacciones') 
-                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
+                    className={`px-4 py-3 text-base font-medium ${isActive('/transacciones')
+                        ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                    }`}
+                      }`}
                   >
                     Transacciones
                   </Link>
                   <Link
                     to="/mensajes"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`px-4 py-3 text-base font-medium ${
-                      isActive('/mensajes') 
-                      ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
+                    className={`px-4 py-3 text-base font-medium ${isActive('/mensajes')
+                        ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                    }`}
+                      }`}
                   >
                     Mensajes
                   </Link>
@@ -412,11 +398,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Link
                 to="/preferencias"
                 onClick={() => setIsMenuOpen(false)}
-                className={`px-4 py-3 text-base font-medium ${
-                  isActive('/preferencias') 
-                  ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600' 
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
+                className={`px-4 py-3 text-base font-medium ${isActive('/preferencias')
+                    ? 'text-purple-600 dark:text-purple-400 bg-gray-200 dark:bg-gray-600'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                  }`}
               >
                 Preferencias
               </Link>
@@ -479,7 +464,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             if (user?.id) {
               deleteCache(`stats_${user.id}_v1`);
             }
-            
+
             // Refrescar usuario desde el servidor
             await refreshUser();
           } catch (error) {

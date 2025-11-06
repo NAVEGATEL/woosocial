@@ -203,9 +203,13 @@ const ProductGrid: React.FC<ProductGridProps> = ({ userId, selectedCategoryId = 
 
       // 1) Si ya tenemos productos en memoria y la conexión está ok, reutilizar
       if (connectionStatus === 'connected' && allProducts.length > 0) {
+        // Procesar primero, luego cambiar loading
         buildCategories(allProducts);
         applyFilterAndPaginate(allProducts, selectedCategoryId, 1);
-        setLoading(false);
+        // Usar requestAnimationFrame para asegurar que el render se complete antes de ocultar loading
+        requestAnimationFrame(() => {
+          setLoading(false);
+        });
         return;
       }
 
@@ -213,11 +217,15 @@ const ProductGrid: React.FC<ProductGridProps> = ({ userId, selectedCategoryId = 
       const cacheKey = `wc_all_products_${userId}_v1`;
       const cached = getCache<WooCommerceProduct[]>(cacheKey);
       if (cached && Array.isArray(cached) && cached.length > 0) {
+        // Procesar primero los datos del caché
         setAllProducts(cached);
         buildCategories(cached);
         applyFilterAndPaginate(cached, selectedCategoryId, 1);
         setConnectionStatus('connected');
-        setLoading(false);
+        // Usar requestAnimationFrame para asegurar render limpio
+        requestAnimationFrame(() => {
+          setLoading(false);
+        });
         return;
       }
 
@@ -355,17 +363,27 @@ const ProductGrid: React.FC<ProductGridProps> = ({ userId, selectedCategoryId = 
 
   // Recalcular al cambiar categoría, stock o destacado/oferta
   useEffect(() => {
-    applyFilterAndPaginate(allProducts, selectedCategoryId, 1);
-  }, [search, selectedCategoryId, stockFilter, featureFilter, allProducts]);
+    // Solo procesar si hay productos cargados
+    if (allProducts.length > 0) {
+      applyFilterAndPaginate(allProducts, selectedCategoryId, 1);
+    }
+  }, [search, selectedCategoryId, stockFilter, featureFilter]);
 
   // Activar animación cuando cambian los productos mostrados
   useEffect(() => {
+    if (products.length === 0) {
+      setIsAnimating(false);
+      return;
+    }
     setIsAnimating(false);
-    // Pequeño delay para que React renderice primero y luego animar
-    const timer = setTimeout(() => {
-      setIsAnimating(true);
-    }, 10);
-    return () => clearTimeout(timer);
+    // Usar requestAnimationFrame para mejor sincronización con el render
+    const frameId = requestAnimationFrame(() => {
+      // Doble frame para asegurar que el DOM esté listo
+      requestAnimationFrame(() => {
+        setIsAnimating(true);
+      });
+    });
+    return () => cancelAnimationFrame(frameId);
   }, [products]);
 
   // Activar animación cuando se vuelve del generador de prompts
@@ -373,11 +391,15 @@ const ProductGrid: React.FC<ProductGridProps> = ({ userId, selectedCategoryId = 
     // Solo ejecutar animación si cambió de true a false (volver del generador)
     if (prevShowPromptGeneratorRef.current && !showPromptGenerator && products.length > 0) {
       setIsAnimating(false);
-      // Pequeño delay para que React renderice primero y luego animar
-      const timer = setTimeout(() => {
-        setIsAnimating(true);
-      }, 10);
-      return () => clearTimeout(timer);
+      // Usar requestAnimationFrame para mejor sincronización
+      const frameId = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsAnimating(true);
+        });
+      });
+      // Actualizar la referencia para la próxima vez
+      prevShowPromptGeneratorRef.current = showPromptGenerator;
+      return () => cancelAnimationFrame(frameId);
     }
     // Actualizar la referencia para la próxima vez
     prevShowPromptGeneratorRef.current = showPromptGenerator;
@@ -386,7 +408,13 @@ const ProductGrid: React.FC<ProductGridProps> = ({ userId, selectedCategoryId = 
   const handlePageChange = (page: number) => {
     setIsAnimating(false);
     applyFilterAndPaginate(allProducts, selectedCategoryId, page);
-    setTimeout(() => setIsAnimating(true), 10);
+    // Usar requestAnimationFrame para mejor sincronización
+    const frameId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setIsAnimating(true);
+      });
+    });
+    // No necesitamos limpiar porque se ejecuta inmediatamente
   };
 
   if (loading) {
@@ -619,25 +647,33 @@ const ProductGrid: React.FC<ProductGridProps> = ({ userId, selectedCategoryId = 
                       loading="lazy"
                       onError={(e) => {
                         // Si la imagen falla al cargar, mostrar placeholder
-                        const img = e.target as any;
-                        (img.style as any).display = 'none';
-                        img.nextElementSibling?.classList.remove('hidden');
+                        const img = e.target as HTMLImageElement;
+                        if (img) {
+                          img.style.display = 'none';
+                          const spinner = img.parentElement?.querySelector('.image-spinner') as HTMLElement;
+                          const placeholder = img.parentElement?.querySelector('.image-placeholder') as HTMLElement;
+                          if (spinner) spinner.style.display = 'none';
+                          if (placeholder) placeholder.classList.remove('hidden');
+                        }
                       }}
                       onLoad={(e) => {
-                        // Ocultar placeholder cuando la imagen se carga correctamente
-                        const img = e.target as any;
-                        img.nextElementSibling?.classList.add('hidden');
+                        // Ocultar spinner cuando la imagen se carga correctamente
+                        const img = e.target as HTMLImageElement;
+                        if (img) {
+                          const spinner = img.parentElement?.querySelector('.image-spinner') as HTMLElement;
+                          if (spinner) spinner.style.display = 'none';
+                        }
                       }}
                     />
-                    {/* Indicador de carga */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 pointer-events-none">
+                    {/* Indicador de carga - se oculta cuando la imagen carga */}
+                    <div className="image-spinner absolute inset-0 flex items-center justify-center bg-gray-100 pointer-events-none">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                     </div>
                   </>
                 ) : null}
 
                 {/* Placeholder que se muestra si no hay imagen o si falla al cargar */}
-                <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${product.images && product.images.length > 0 && product.images[0].src ? 'hidden' : ''}`}>
+                <div className={`image-placeholder absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${product.images && product.images.length > 0 && product.images[0].src ? 'hidden' : ''}`}>
                   <div className="text-center">
                     <div className="w-16 h-16 mx-auto mb-3 bg-gray-300 rounded-lg flex items-center justify-center">
                       <svg className="h-8 w-8 text-gray-900 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
