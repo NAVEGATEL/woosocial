@@ -291,8 +291,24 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </>
               )}
 
+              {/* Botón de toggle de tema cuando no hay usuario - al lado del botón de iniciar sesión */}
+              {!user && (
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-md dark:text-gray-100 bg-gray-200 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-400 transition-colors"
+                  aria-label="Cambiar tema"
+                  title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                >
+                  {theme === 'dark' ? (
+                    <MdLightMode className="w-5 h-5" />
+                  ) : (
+                    <MdDarkMode className="w-5 h-5" />
+                  )}
+                </button>
+              )}
+
               {/* Botón menú hamburguesa - solo visible en móvil/tablet */}
-              {user ? (
+              {user && (
                 <button
                   ref={menuButtonRef}
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -305,13 +321,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <MdMenu className="w-5 h-5" />
                   )}
                 </button>
-              ) : (
-                <Link
-                  to="/login"
-                  className="text-white px-2 py-2 rounded-md text-sm font-medium h-[40px] border border-gray-300 dark:border-gray-600 w-[fit-content] bg-green-600 hover:bg-green-700"
-                >
-                  Iniciar Sesión
-                </Link>
               )}
             </div>
           </div>

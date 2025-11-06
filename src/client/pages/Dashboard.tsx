@@ -5,6 +5,7 @@ import { apiService } from '../services/api';
 import { TransaccionStats } from '../types';
 import StoreConnectionStatus from '../components/StoreConnectionStatus';
 import ProductGrid from '../components/ProductGrid';
+import AILoader from '../components/AILoader';
 import { getCache, setCache } from '../utils/cache';
 import { FaTiktok, FaInstagram, FaFacebook } from 'react-icons/fa';
 
@@ -96,7 +97,7 @@ const Dashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <AILoader />
       </div>
     );
   }

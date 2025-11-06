@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Publicacion } from '../types';
 import { apiService } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import AILoader from '../components/AILoader';
 import { FaInstagram, FaTiktok, FaFacebook, FaMobileAlt } from 'react-icons/fa';
 
 const Publicaciones: React.FC = () => {
@@ -199,9 +200,9 @@ const Publicaciones: React.FC = () => {
 
       {/* Content */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600 dark:text-white text-lg">Cargando publicaciones...</span>
+        <div className="flex flex-col items-center justify-center py-12">
+          <AILoader />
+          <span className="mt-4 text-gray-600 dark:text-white text-lg">Cargando publicaciones...</span>
         </div>
       )}
 

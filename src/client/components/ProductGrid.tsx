@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiService } from '../services/api';
 import PromptGenerator from './PromptGenerator';
+import AILoader from './AILoader';
 import { getCache, setCache } from '../utils/cache';
 import { useTheme } from '../hooks/useTheme';
 
@@ -420,7 +421,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ userId, selectedCategoryId = 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <AILoader />
       </div>
     );
   }

@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 import { User, SocialPlatformId } from '../types';
 import { PreferenciasUsuario } from '../models/PreferenciasUsuario';
 import { SocialMediaCredential } from '../models/SocialMedia';
+import AILoader from '../components/AILoader';
 
 interface CreateUserData {
   nombre_usuario: string;
@@ -416,7 +417,7 @@ const AdminUsers: React.FC = () => {
               <div>
                 {loadingUsers ? (
                   <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 dark:border-purple-400"></div>
+                    <AILoader className="w-32 h-32" />
                   </div>
                 ) : (
                   <div className="overflow-x-auto">

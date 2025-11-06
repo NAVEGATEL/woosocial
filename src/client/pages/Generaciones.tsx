@@ -3,6 +3,7 @@ import { Video } from '../types';
 import { apiService } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import SocialPublishModal from '../components/SocialPublishModal';
+import AILoader from '../components/AILoader';
 import { FaCopy, FaVideo, FaPlay, FaExpand } from "react-icons/fa";
 
 const Generaciones: React.FC = () => {
@@ -296,9 +297,9 @@ const Generaciones: React.FC = () => {
 
       {/* Content */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600 dark:text-white text-lg">Cargando videos...</span>
+        <div className="flex flex-col items-center justify-center py-12">
+          <AILoader />
+          <span className="mt-4 text-gray-600 dark:text-white text-lg">Cargando videos...</span>
         </div>
       )}
 
