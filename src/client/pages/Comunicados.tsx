@@ -28,6 +28,7 @@ const Comunicados: React.FC = () => {
 
   // Filtros
   const [filtroTipo, setFiltroTipo] = useState<string>('');
+  const [filtroEstado, setFiltroEstado] = useState<string>('');
   const [busqueda, setBusqueda] = useState('');
 
   // Paginación (fija a 10 elementos por página)
@@ -106,10 +107,13 @@ const Comunicados: React.FC = () => {
 
   const mensajesFiltrados = mensajes.filter(mensaje => {
     const matchTipo = !filtroTipo || mensaje.tipo === filtroTipo;
+    const matchEstado = !filtroEstado || 
+      (filtroEstado === 'resuelto' && mensaje.is_done) ||
+      (filtroEstado === 'sin_resolver' && !mensaje.is_done);
     const matchBusqueda = !busqueda ||
       mensaje.asunto.toLowerCase().includes(busqueda.toLowerCase()) ||
       mensaje.mensaje.toLowerCase().includes(busqueda.toLowerCase());
-    return matchTipo && matchBusqueda;
+    return matchTipo && matchEstado && matchBusqueda;
   });
 
   // Resetear a página 1 cuando cambian los filtros
@@ -119,7 +123,7 @@ const Comunicados: React.FC = () => {
     setTimeout(() => {
       setMensajesCargados(true);
     }, 50);
-  }, [filtroTipo, busqueda]);
+  }, [filtroTipo, filtroEstado, busqueda]);
 
   // Animar cuando cambia la página
   useEffect(() => {
@@ -216,6 +220,21 @@ const Comunicados: React.FC = () => {
               <option value="sugerencia">Sugerencia</option>
               <option value="error">Reportar Error</option>
               <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="filtro-estado" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Filtrar por estado
+            </label>
+            <select
+              id="filtro-estado"
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value)}
+              className="px-2 h-8 w-[180px] border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+            >
+              <option value="">Todos los estados</option>
+              <option value="resuelto">Resuelto</option>
+              <option value="sin_resolver">Sin resolver</option>
             </select>
           </div>
           <div>
