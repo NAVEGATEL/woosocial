@@ -529,8 +529,8 @@ class ApiService {
     product: any;
     prompt_config: any;
     timestamp: string;
-  }): Promise<{ success: boolean; message: string; data: any }> {
-    return this.request<{ success: boolean; message: string; data: any }>('/n8n/webhook', {
+  }): Promise<{ success: boolean; message: string; video_id?: string; data: any; callback_urls?: { confirm: string; error: string } }> {
+    return this.request<{ success: boolean; message: string; video_id?: string; data: any; callback_urls?: { confirm: string; error: string } }>('/n8n/webhook', {
       method: 'POST',
       body: JSON.stringify(data)
     });

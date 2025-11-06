@@ -390,11 +390,8 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
             </div>
           )}
           {webhookConfigured === true && webhookUrl && (
-            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg text-blue-800 dark:text-blue-200">
-              <p className="font-semibold mb-1">✓ Webhook configurado</p>
-              <p className="text-sm break-all">
-                URL: {webhookUrl}
-              </p>
+            <div className="mb-4 p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg text-green-800 dark:text-green-200">
+              <p className="font-semibold">✓ TODO LISTO PARA PUBLICAR</p>
             </div>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

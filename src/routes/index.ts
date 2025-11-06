@@ -9,6 +9,7 @@ import adminRoutes from './admin';
 import videoCallbackRoutes from './video-callback';
 import socialRoutes from './social';
 import contactRoutes from './contact';
+import n8nRoutes from './n8n';
 
 const router = Router();
 
@@ -41,6 +42,9 @@ router.use('/admin', adminRoutes);
 
 // Rutas de generación de video y puntos
 router.use('/video-callback', videoCallbackRoutes);
+
+// Rutas de N8N
+router.use('/n8n', n8nRoutes);
 
 // Ruta de salud del API
 router.get('/health', (req, res) => {

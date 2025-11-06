@@ -163,9 +163,16 @@ router.post('/confirm', async (req: any, res: Response) => {
   try {
     const { user_id, video_id, status, points_to_deduct = 10 } = req.body;
 
-    console.log('🎬 Callback recibido:', { user_id, video_id, status, points_to_deduct });
+    console.log('🎬 Callback recibido:', { 
+      user_id, 
+      video_id, 
+      status, 
+      points_to_deduct,
+      body_completo: JSON.stringify(req.body)
+    });
 
     if (!user_id || !video_id) {
+      console.error('❌ Faltan parámetros requeridos:', { user_id, video_id });
       return res.status(400).json({ 
         error: 'user_id y video_id son requeridos' 
       });
@@ -203,17 +210,28 @@ router.post('/confirm', async (req: any, res: Response) => {
         [newPoints, user_id]
       );
 
-      // Registrar la transacción
-      await db.execute(
+      // Registrar la transacción con el video_id recibido
+      const descripcion = `Generación de video ${video_id} - ${points_to_deduct} puntos`;
+      
+      console.log('💾 Guardando transacción:', {
+        id_usuario: user_id,
+        tipo: 'penalizacion',
+        descripcion: descripcion,
+        cantidad_puntos: -points_to_deduct,
+        video_id: video_id
+      });
+
+      const [result] = await db.execute(
         'INSERT INTO transacciones (id_usuario, tipo, descripcion, cantidad_puntos) VALUES (?, ?, ?, ?)',
         [
           user_id,
           'penalizacion',
-          `Generación de video ${video_id} - ${points_to_deduct} puntos`,
+          descripcion,
           -points_to_deduct
         ]
-      );
+      ) as any[];
 
+      console.log(`✅ Transacción guardada con ID: ${result.insertId}, video_id: ${video_id}`);
       console.log(`✅ Video ${video_id} generado exitosamente. Usuario ${user_id} perdió ${points_to_deduct} puntos. Nuevo balance: ${newPoints}`);
 
       // Guardar estado del video
@@ -280,6 +298,86 @@ router.post('/confirm', async (req: any, res: Response) => {
 
   } catch (error: any) {
     console.error('Error en callback de video:', error);
+    res.status(500).json({ 
+      error: 'Error interno del servidor',
+      details: error.message
+    });
+  }
+});
+
+// POST /api/video-callback/error - Callback para notificar error en la generación de video
+router.post('/error', async (req: any, res: Response) => {
+  try {
+    const { user_id, video_id, error_message, status } = req.body;
+
+    console.log('❌ Callback de error recibido:', { user_id, video_id, error_message, status });
+
+    if (!user_id || !video_id) {
+      return res.status(400).json({ 
+        error: 'user_id y video_id son requeridos' 
+      });
+    }
+
+    // Verificar que el usuario existe
+    const [userRows] = await db.execute(
+      'SELECT id, puntos FROM users WHERE id = ?',
+      [user_id]
+    ) as any[];
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Usuario no encontrado' 
+      });
+    }
+
+    const user = userRows[0];
+
+    // Registrar el error en una transacción (sin descontar puntos)
+    await db.execute(
+      'INSERT INTO transacciones (id_usuario, tipo, descripcion, cantidad_puntos) VALUES (?, ?, ?, ?)',
+      [
+        user_id,
+        'penalizacion',
+        `Error en generación de video ${video_id}${error_message ? ` - ${error_message}` : ''}`,
+        0
+      ]
+    );
+
+    // Guardar estado de fallo del video
+    videoStatus.set(video_id, {
+      status: 'failed',
+      user_id: parseInt(user_id),
+      completed_at: new Date(),
+      points_deducted: 0,
+      new_balance: user.puntos,
+      video_url: ''
+    });
+
+    // Notificar al usuario via SSE
+    console.log(`📡 Notificando usuario ${user_id} via SSE sobre error...`);
+    notifyUser(parseInt(user_id), {
+      type: 'video_failed',
+      video_id,
+      status: 'failed',
+      points_deducted: 0,
+      new_balance: user.puntos,
+      error_message: error_message || 'Error desconocido en la generación del video',
+      message: 'La generación del video falló. No se descontaron puntos.'
+    });
+
+    console.log(`✅ Error registrado para video ${video_id}. Usuario ${user_id} no perdió puntos. Balance: ${user.puntos}`);
+
+    return res.json({
+      success: true,
+      message: 'Error registrado exitosamente',
+      video_id,
+      status: 'failed',
+      points_deducted: 0,
+      new_balance: user.puntos
+    });
+
+  } catch (error: any) {
+    console.error('Error en callback de error de video:', error);
     res.status(500).json({ 
       error: 'Error interno del servidor',
       details: error.message

@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import toast from 'react-hot-toast';
+import AILoader from './AILoader';
 
 // Dropdown con los mismos estilos que los filtros de ProductGrid
 const CategoryDropdown = ({
@@ -464,11 +465,6 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
       return;
     }
 
-    if (!n8nWebhookUrl) {
-      toast.error('No se ha configurado la URL del webhook de N8N. Ve a Preferencias para configurarlo.');
-      return;
-    }
-
     if (!canGenerate) {
       toast.error(`No tienes suficientes puntos para generar un video. Necesitas 10 puntos, tienes ${userPoints}.`);
       return;
@@ -478,15 +474,7 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
     setWebhookStatus('idle');
 
     try {
-      // Generar URL de callback
-      const g: any = globalThis as any;
-      const callbackUrl = (g && g.location && g.location.origin ? g.location.origin : '') + '/api/video-callback/confirm';
-
-      // Crear ID único para el video
-      const videoId = `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      setVideoId(videoId);
-      setProcessingStartTime(new Date());
-
+      // Preparar datos para enviar al backend
       const webhookData = {
         product: {
           id: selectedProduct.id,
@@ -516,39 +504,35 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
           quality: selectedQuality,
           generated_prompt: generatedPrompt
         },
-        // Datos específicos que espera tu workflow de N8N
-        prompt: generatedPrompt,
-        resolution: selectedQuality,
-        aspectRatio: selectedQuality === '720' ? '9:16' : '16:9', // Ajusta según tus necesidades
-        timestamp: new Date().toISOString(),
-        // Datos para el callback
-        user_id: user?.id,
-        video_id: videoId,
-        callback_url: callbackUrl
+        timestamp: new Date().toISOString()
       };
 
-      const response = await fetch(n8nWebhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(webhookData)
-      });
+      // Enviar al endpoint del backend que manejará la conexión con N8N
+      const response = await apiService.sendToN8nWebhook(webhookData) as any;
 
-      if (response.ok) {
+      if (response.success) {
+        // El backend genera el video_id y lo devuelve en la respuesta
+        const videoId = response.video_id;
+        if (videoId) {
+          setVideoId(videoId);
+        }
+        setProcessingStartTime(new Date());
+
         // Iniciar estado de procesamiento
         setIsProcessingVideo(true);
         setWebhookStatus('idle');
+        toast.success('Video en proceso de generación');
 
         // El callback real vendrá desde N8N cuando el video esté listo
-        // No simulamos el final aquí, esperamos el callback real
+        // vía los endpoints /api/video-callback/confirm o /api/video-callback/error
       } else {
         setWebhookStatus('error');
-        console.error('Error del webhook:', response.status, response.statusText);
+        toast.error(response.message || 'Error al enviar datos a N8N');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al enviar al webhook:', error);
       setWebhookStatus('error');
+      toast.error(error.message || 'Error al enviar datos a N8N');
     } finally {
       setIsSendingToWebhook(false);
     }
@@ -617,15 +601,13 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         <div className="text-center py-12">
-          {/* Spinner animado (reemplazado por icono centrado) */}
-          <div className="mb-2 flex justify-center">
-            <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+          {/* Loader con SVG "AI" animado */}
+          <div className="mb-6 flex justify-center">
+            <AILoader />
           </div>
 
-          {/* Barra de progreso centrada bajo el icono */}
-          <div className="mt-1 mx-auto w-60">
+          {/* Barra de progreso centrada bajo el loader */}
+          <div className="mt-4 mx-auto w-60">
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
               <div className="bg-blue-600 dark:bg-blue-400 h-1 rounded-full animate-pulse w-3/5"></div>
             </div>
@@ -1005,15 +987,10 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
           </span>
           <button
             onClick={sendToWebhook}
-            disabled={isSendingToWebhook || !selectedTemplate || !n8nWebhookUrl || isLoadingPreferences || !canGenerate || isCheckingPoints || !generatedPrompt || !generatedPrompt.trim()}
+            disabled={isSendingToWebhook || !selectedTemplate || !canGenerate || isCheckingPoints || !generatedPrompt || !generatedPrompt.trim()}
             className="w-[fit-content] inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
-            {isLoadingPreferences ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Cargando configuración...
-              </>
-            ) : isCheckingPoints ? (
+            {isCheckingPoints ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                 Verificando puntos...
