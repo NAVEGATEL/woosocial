@@ -261,7 +261,7 @@ const Comunicados: React.FC = () => {
             {mensajesPaginados.map((mensaje, index) => (
             <div
               key={mensaje.id}
-              className="bg-white dark:bg-[#1e2124] rounded-lg border border-gray-300 dark:border-gray-600 p-4 hover:shadow-md transition-shadow cursor-pointer message-item dark:hover:border-gray-100"
+              className="bg-white dark:bg-[#1e2124] rounded-lg border border-gray-200 dark:border-gray-600 p-4 hover:shadow-md transition-shadow cursor-pointer message-item dark:hover:border-gray-100"
               onClick={() => setSelectedMensaje(mensaje)}
               style={{
                 animationDelay: mensajesCargados ? `${index * 0.1}s` : '0s'
