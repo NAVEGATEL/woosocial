@@ -6,7 +6,7 @@ import { StripeProduct } from '../types';
 import { useTheme } from '../hooks/useTheme';
 import toast from 'react-hot-toast';
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY || 'pk_test_51RYOX72fABgPqjgkcJlJyrXmJZvNlRh2JeBzEdoTP7Paob9ByFmmvsfnxqz34khNqmt1tryT0hB2Z3Do0UGFERjj00W2P4SVNB');
+const stripePromise = loadStripe(process.env.STRIPE_PUBLIC_KEY);
 
 interface PointsPurchaseModalProps {
   isOpen: boolean;
