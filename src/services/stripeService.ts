@@ -7,20 +7,22 @@ const stripe = new Stripe(process.env.SECRET_Stripe_API_KEY!, {
 
 // Productos de Stripe con sus precios y puntos (corregidos según descripciones)
 const STRIPE_PRODUCTS = {
-  'prod_TJoe9g106s8q5K': { points: 10, price: 9.99, name: 'Starter pack' },    // Pack de 10 puntos
-  'prod_TJogjd20sm4CA2': { points: 100, price: 84.99, name: 'Premium pack' },  // Pack de 100 puntos
-  'prod_TJogHoJHDrbx85': { points: 50, price: 44.99, name: 'Pro pack' },       // Pack de 50 puntos
-  'prod_TJohX873ZAg1vF': { points: 500, price: 399, name: 'Agent pack' },      // Pack de 500 puntos
-  'prod_TJoiSjJFDlvJYu': { points: 1000, price: 749, name: 'Enterprise pack' }, // Pack de 1000 puntos
+  'prod_TNXcHPv7kFuCrz': { points: 10, price: 9.99, name: 'Pack Básico' },
+  'prod_TNXebYTnEs1AZk': { points: 50, price: 45.99, name: 'Pack Medio' },     // Pack de 10 puntos
+  'prod_TNXf2f6p032dKz': { points: 100, price: 79.99, name: 'Pack Avanzado' },  // Pack de 100 puntos
+       
+  'prod_TNXgBVFBGHapAU': { points: 500, price: 399.99, name: 'Pack Profesional' },      // Pack de 500 puntos
+  'prod_TNXisdKKYeqahX': { points: 1000, price: 749.99, name: 'Pack Empresa' }, // Pack de 1000 puntos
 };
 
 // IDs permitidos (proporcionados por el usuario)
 const ALLOWED_PRODUCT_IDS = [
-  'prod_TJoe9g106s8q5K',
-  'prod_TJogjd20sm4CA2',
-  'prod_TJogHoJHDrbx85',
-  'prod_TJohX873ZAg1vF',
-  'prod_TJoiSjJFDlvJYu',
+  'prod_TNXcHPv7kFuCrz',
+  'prod_TNXebYTnEs1AZk',
+  'prod_TNXf2f6p032dKz',
+  
+  'prod_TNXgBVFBGHapAU',
+  'prod_TNXisdKKYeqahX',
 ];
 
 // Cache para productos de Stripe
