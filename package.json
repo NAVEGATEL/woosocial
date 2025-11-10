@@ -12,7 +12,8 @@
     "build:client": "vite build",
     "start": "node dist/server.js",
     "type-check": "tsc --noEmit",
-    "check-stripe": "ts-node scripts/check-stripe-config.ts"
+    "check-stripe": "ts-node scripts/check-stripe-config.ts",
+    "get-stripe-products": "ts-node scripts/get-stripe-products.ts"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.3.0",

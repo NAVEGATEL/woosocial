@@ -12,6 +12,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 console.log('🔍 Verificando configuración de Stripe...\n');
 
 let hasErrors = false;
+let hasWarnings = false;
 
 // Verificar clave pública
 console.log('📌 Frontend (Clave Pública):');
@@ -81,6 +82,21 @@ if (process.env.STRIPE_PUBLIC_KEY && process.env.SECRET_Stripe_API_KEY) {
   }
 }
 
+// Verificar IDs de productos en el código
+console.log('\n📌 IDs de Productos en el Código:');
+const isLiveMode = process.env.SECRET_Stripe_API_KEY?.startsWith('sk_live_');
+
+if (isLiveMode) {
+  console.log('  ⚠️  Estás usando claves LIVE');
+  console.log('  🔍 Verifica que los IDs de productos en tu código sean de LIVE');
+  console.log('\n  💡 Ejecuta este comando para obtener los IDs correctos:');
+  console.log('     npm run get-stripe-products\n');
+  hasWarnings = true;
+} else {
+  console.log('  ✅ Estás usando claves TEST');
+  console.log('  💡 Los IDs de productos deben ser de TEST');
+}
+
 console.log('\n' + '='.repeat(60));
 if (hasErrors) {
   console.log('❌ HAY ERRORES EN LA CONFIGURACIÓN');
@@ -92,6 +108,17 @@ if (hasErrors) {
   console.log('   STRIPE_PUBLIC_KEY=pk_test_...');
   console.log('   SECRET_Stripe_API_KEY=sk_test_...');
   process.exit(1);
+} else if (hasWarnings) {
+  console.log('⚠️  CONFIGURACIÓN CON ADVERTENCIAS');
+  console.log('\n🔴 Estás en modo LIVE - Asegúrate de:');
+  console.log('   1. Tener los IDs de productos correctos (modo LIVE)');
+  console.log('   2. Tu cuenta de Stripe esté completamente activada');
+  console.log('   3. Los productos existan en tu dashboard de LIVE');
+  console.log('\n📝 Ejecuta para verificar productos:');
+  console.log('   npm run get-stripe-products');
+  console.log('\n📖 Lee la guía completa:');
+  console.log('   STRIPE_TEST_VS_LIVE.md');
+  process.exit(0);
 } else {
   console.log('✅ CONFIGURACIÓN CORRECTA');
   console.log('\n💡 Tarjetas de prueba para modo TEST:');
