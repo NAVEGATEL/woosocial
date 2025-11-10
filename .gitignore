@@ -222,4 +222,4 @@ vite.config.mts
 # - scripts/init-db-wrapper.sh
 # - scripts/generate-bcrypt-hash.js
 # - scripts/README-INIT-DB.md
-# - .gitattributes
+# - .gitattributesCONFIGURACION_ENV.md

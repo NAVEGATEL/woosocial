@@ -6,8 +6,9 @@ import { StripeProduct } from '../types';
 import { useTheme } from '../hooks/useTheme';
 import toast from 'react-hot-toast';
 
-console.log('🔵 [STRIPE] Inicializando Stripe con clave pública:', process.env.STRIPE_PUBLIC_KEY ? 'CONFIGURADA' : '❌ NO CONFIGURADA');
-const stripePromise = loadStripe(process.env.STRIPE_PUBLIC_KEY);
+console.log('🔵 [STRIPE] Inicializando Stripe con clave pública:', import.meta.env.VITE_STRIPE_PUBLIC_KEY ? 'CONFIGURADA' : '❌ NO CONFIGURADA');
+console.log('🔵 [STRIPE] Clave pública:', import.meta.env.VITE_STRIPE_PUBLIC_KEY ? `${import.meta.env.VITE_STRIPE_PUBLIC_KEY.substring(0, 20)}...` : 'undefined');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 interface PointsPurchaseModalProps {
   isOpen: boolean;
