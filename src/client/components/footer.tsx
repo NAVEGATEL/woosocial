@@ -34,8 +34,8 @@ const Footer: React.FC = () => {
         <div className="flex flex-wrap justify-between gap-8 md:gap-6">
           <div>
             <img
-              src={theme === 'dark' ? "src/client/assets/img/WooVideoDarkMode.svg" : "src/client/assets/img/WooVideo.svg"}
-              alt="WooVideo"
+              src={theme === 'dark' ? "src/client/assets/img/RRSS NAVEGATELDarkMode.svg" : "src/client/assets/img/RRSS NAVEGATEL.svg"}
+              alt="RRSS NAVEGATEL"
               className="w-[200px]"
             />
             <p className="mt-3 text-sm text-gray-900 dark:text-gray-400">Crea anuncios de tus videos y publícalos en tus redes sociales gracias a la IA.</p>
@@ -67,7 +67,7 @@ const Footer: React.FC = () => {
 
         <div className={`mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 ${theme === 'dark' ? 'border-t border-gray-700' : 'border-t border-gray-300'}`}>
           <div className="text-xs text-gray-900 dark:text-gray-400">
-            <p>© {year} WooVideo | Desarrollado por Navegatel</p>
+            <p>© {year} RRSS NAVEGATEL | Desarrollado por Navegatel</p>
             <p>SUMANDO ON LINE SL | CIF: B54893066</p>
           </div>
           <div className="flex items-center gap-4">

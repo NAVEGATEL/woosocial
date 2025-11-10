@@ -76,8 +76,8 @@ const Login: React.FC = () => {
         <div>
           <div className="flex justify-center mb-4">
             <img 
-              src={theme === 'dark' ? "src/client/assets/img/WooVideoDarkMode.svg" : "src/client/assets/img/WooVideo.svg"} 
-              alt="WooVideo" 
+              src={theme === 'dark' ? "src/client/assets/img/RRSS NAVEGATELDarkMode.svg" : "src/client/assets/img/RRSS NAVEGATEL.svg"} 
+              alt="RRSS NAVEGATEL" 
               className="w-[200px]" 
             />
           </div>

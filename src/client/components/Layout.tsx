@@ -143,8 +143,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="flex items-center w-[360px]">
               <Link to="/" className="text-xl font-bold text-gray-900 dark:text-white">
                 <img
-                  src={theme === 'dark' ? "src/client/assets/img/WooVideoDarkMode.svg" : "src/client/assets/img/WooVideo.svg"}
-                  alt="WooVideo"
+                  src={theme === 'dark' ? "src/client/assets/img/RRSS NAVEGATELDarkMode.svg" : "src/client/assets/img/RRSS NAVEGATEL.svg"}
+                  alt="RRSS NAVEGATEL"
                   className="w-[120px] sm:w-[150px]"
                 />
               </Link>
