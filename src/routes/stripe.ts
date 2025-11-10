@@ -7,11 +7,17 @@ const router = express.Router();
 
 // Obtener productos disponibles
 router.get('/products', authenticateToken, async (req: Request, res: Response) => {
+  console.log('🔵 [STRIPE-API] GET /products - Inicio');
   try {
     const products = await StripeService.getProducts();
+    console.log('✅ [STRIPE-API] GET /products - Productos obtenidos:', products.length);
     res.json({ success: true, products });
   } catch (error: any) {
-    console.error('Error getting products:', error);
+    console.error('❌ [STRIPE-API] GET /products - Error:', {
+      message: error.message,
+      stack: error.stack,
+      fullError: error
+    });
     res.status(500).json({ 
       success: false, 
       error: 'Error al obtener productos' 
@@ -26,9 +32,12 @@ router.post('/create-payment-intent',
     body('productId').notEmpty().withMessage('ID del producto es requerido'),
   ],
   async (req: Request, res: Response) => {
+    console.log('🔵 [STRIPE-API] POST /create-payment-intent - Inicio');
+    console.log('🔵 [STRIPE-API] Request body:', req.body);
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.error('❌ [STRIPE-API] Errores de validación:', errors.array());
         return res.status(400).json({
           success: false,
           error: 'Datos inválidos',
@@ -39,9 +48,17 @@ router.post('/create-payment-intent',
       const { productId } = req.body;
       const userId = (req as any).user.id;
 
+      console.log('🔵 [STRIPE-API] Datos validados:', { productId, userId });
+
       const result = await StripeService.createPaymentIntent({
         productId,
         userId,
+      });
+
+      console.log('✅ [STRIPE-API] Payment intent creado exitosamente:', {
+        hasClientSecret: !!result.clientSecret,
+        amount: result.amount,
+        points: result.points
       });
 
       res.json({
@@ -51,7 +68,11 @@ router.post('/create-payment-intent',
         points: result.points,
       });
     } catch (error: any) {
-      console.error('Error creating payment intent:', error);
+      console.error('❌ [STRIPE-API] Error creating payment intent:', {
+        message: error.message,
+        stack: error.stack,
+        fullError: error
+      });
       res.status(500).json({
         success: false,
         error: error.message || 'Error al crear el intento de pago'
@@ -67,9 +88,12 @@ router.post('/confirm-payment',
     body('paymentIntentId').notEmpty().withMessage('ID del payment intent es requerido'),
   ],
   async (req: Request, res: Response) => {
+    console.log('🔵 [STRIPE-API] POST /confirm-payment - Inicio');
+    console.log('🔵 [STRIPE-API] Request body:', req.body);
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.error('❌ [STRIPE-API] Errores de validación:', errors.array());
         return res.status(400).json({
           success: false,
           error: 'Datos inválidos',
@@ -80,7 +104,11 @@ router.post('/confirm-payment',
       const { paymentIntentId } = req.body;
       const userId = (req as any).user.id;
 
+      console.log('🔵 [STRIPE-API] Confirmando pago:', { paymentIntentId, userId });
+
       const result = await StripeService.confirmPayment(paymentIntentId);
+
+      console.log('✅ [STRIPE-API] Pago confirmado exitosamente:', result);
 
       res.json({
         success: true,
@@ -88,7 +116,11 @@ router.post('/confirm-payment',
         points: result.points,
       });
     } catch (error: any) {
-      console.error('Error confirming payment:', error);
+      console.error('❌ [STRIPE-API] Error confirming payment:', {
+        message: error.message,
+        stack: error.stack,
+        fullError: error
+      });
       res.status(500).json({
         success: false,
         error: error.message || 'Error al confirmar el pago'
@@ -99,17 +131,25 @@ router.post('/confirm-payment',
 
 // Webhook de Stripe (sin autenticación)
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
+  console.log('🔵 [STRIPE-API] POST /webhook - Inicio');
   const signature = req.headers['stripe-signature'] as string;
   
   if (!signature) {
+    console.error('❌ [STRIPE-API] Webhook sin firma de Stripe');
     return res.status(400).json({ success: false, error: 'Falta la firma de Stripe' });
   }
 
+  console.log('🔵 [STRIPE-API] Signature presente, procesando webhook...');
   try {
     await StripeService.handleWebhook(req.body, signature);
+    console.log('✅ [STRIPE-API] Webhook procesado exitosamente');
     res.json({ success: true });
   } catch (error: any) {
-    console.error('Webhook error:', error);
+    console.error('❌ [STRIPE-API] Webhook error:', {
+      message: error.message,
+      stack: error.stack,
+      fullError: error
+    });
     res.status(400).json({
       success: false,
       error: error.message || 'Error al procesar webhook'

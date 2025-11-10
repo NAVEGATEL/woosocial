@@ -6,6 +6,7 @@ import { StripeProduct } from '../types';
 import { useTheme } from '../hooks/useTheme';
 import toast from 'react-hot-toast';
 
+console.log('🔵 [STRIPE] Inicializando Stripe con clave pública:', process.env.STRIPE_PUBLIC_KEY ? 'CONFIGURADA' : '❌ NO CONFIGURADA');
 const stripePromise = loadStripe(process.env.STRIPE_PUBLIC_KEY);
 
 interface PointsPurchaseModalProps {
@@ -26,41 +27,79 @@ const CheckoutForm: React.FC<{
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    console.log('🔵 [STRIPE] Iniciando proceso de pago');
 
     if (!stripe || !elements) {
+      console.error('❌ [STRIPE] Stripe o Elements no están cargados', { stripe: !!stripe, elements: !!elements });
       return;
     }
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      console.error('❌ [STRIPE] CardElement no encontrado');
+      toast.error('Error: Elemento de tarjeta no disponible');
+      return;
+    }
+
+    console.log('✅ [STRIPE] CardElement disponible');
 
     setLoading(true);
 
     try {
       // Crear payment intent
-      const { clientSecret } = await apiService.createPaymentIntent({
+      console.log('🔵 [STRIPE] Solicitando clientSecret para producto:', product.id);
+      const paymentIntentResponse = await apiService.createPaymentIntent({
         productId: product.id,
+      });
+      
+      console.log('✅ [STRIPE] ClientSecret recibido:', { 
+        hasClientSecret: !!paymentIntentResponse.clientSecret,
+        amount: paymentIntentResponse.amount,
+        points: paymentIntentResponse.points 
       });
 
       // Confirmar pago
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      console.log('🔵 [STRIPE] Confirmando pago con tarjeta...');
+      const { error, paymentIntent } = await stripe.confirmCardPayment(paymentIntentResponse.clientSecret, {
         payment_method: {
-          card: elements.getElement(CardElement)!,
+          card: cardElement,
         },
       });
 
       if (error) {
+        console.error('❌ [STRIPE] Error al confirmar pago:', {
+          type: error.type,
+          code: error.code,
+          message: error.message,
+          declineCode: error.decline_code,
+          param: error.param,
+          fullError: error
+        });
         toast.error(error.message || 'Error al procesar el pago');
       } else if (paymentIntent?.status === 'succeeded') {
+        console.log('✅ [STRIPE] Pago exitoso en Stripe:', paymentIntent.id);
         // Confirmar pago en el backend
+        console.log('🔵 [STRIPE] Confirmando pago en backend...');
         const result = await apiService.confirmPayment(paymentIntent.id);
         if (result.success) {
+          console.log('✅ [STRIPE] Pago confirmado en backend, puntos agregados:', result.points);
           toast.success(result.message);
           onSuccess(result.points);
           onClose();
         }
+      } else {
+        console.warn('⚠️ [STRIPE] Estado de pago inesperado:', paymentIntent?.status);
       }
     } catch (error: any) {
+      console.error('❌ [STRIPE] Error general en handleSubmit:', {
+        message: error.message,
+        stack: error.stack,
+        fullError: error
+      });
       toast.error(error.message || 'Error al procesar el pago');
     } finally {
       setLoading(false);
+      console.log('🔵 [STRIPE] Proceso de pago finalizado');
     }
   };
 
@@ -75,7 +114,36 @@ const CheckoutForm: React.FC<{
       </div>
       
       <div className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} rounded-lg p-3`}>
-        <CardElement />
+        <CardElement 
+          options={{
+            style: {
+              base: {
+                fontSize: '16px',
+                color: theme === 'dark' ? '#fff' : '#424770',
+                '::placeholder': {
+                  color: theme === 'dark' ? '#aab7c4' : '#aab7c4',
+                },
+              },
+              invalid: {
+                color: '#9e2146',
+              },
+            },
+          }}
+          onChange={(event) => {
+            console.log('🔵 [STRIPE] CardElement cambió:', {
+              complete: event.complete,
+              empty: event.empty,
+              error: event.error ? {
+                type: event.error.type,
+                code: event.error.code,
+                message: event.error.message
+              } : null
+            });
+          }}
+          onReady={() => {
+            console.log('✅ [STRIPE] CardElement listo');
+          }}
+        />
       </div>
       
       <div className="flex space-x-3">
@@ -112,12 +180,18 @@ const PointsPurchaseModal: React.FC<PointsPurchaseModalProps> = ({ isOpen, onClo
 
   const fetchProducts = async () => {
     try {
+      console.log('🔵 [STRIPE] Cargando productos...');
       setLoading(true);
       const response = await apiService.getStripeProducts();
       if (response.success) {
+        console.log('✅ [STRIPE] Productos cargados:', response.products.length, 'productos');
+        console.log('📦 [STRIPE] Productos:', response.products);
         setProducts(response.products);
+      } else {
+        console.error('❌ [STRIPE] Error al cargar productos: respuesta no exitosa');
       }
     } catch (error: any) {
+      console.error('❌ [STRIPE] Error al cargar productos:', error);
       toast.error('Error al cargar productos');
     } finally {
       setLoading(false);
@@ -160,7 +234,10 @@ const PointsPurchaseModal: React.FC<PointsPurchaseModalProps> = ({ isOpen, onClo
               {products.map((product) => (
                 <div
                   key={product.id}
-                  onClick={() => setSelectedProduct(product)}
+                  onClick={() => {
+                    console.log('🔵 [STRIPE] Producto seleccionado:', product);
+                    setSelectedProduct(product);
+                  }}
                   className={`border ${theme === 'dark' ? 'border-gray-600 hover:border-purple-300 hover:bg-purple-900' : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50'} rounded-lg p-2 cursor-pointer transition-colors`}
                 >
                   <div className="flex justify-between items-start">
