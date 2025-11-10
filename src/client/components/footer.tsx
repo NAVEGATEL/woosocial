@@ -34,7 +34,7 @@ const Footer: React.FC = () => {
         <div className="flex flex-wrap justify-between gap-8 md:gap-6">
           <div>
             <img
-              src={theme === 'dark' ? "src/client/assets/img/RRSS NAVEGATELDarkMode.svg" : "src/client/assets/img/RRSS NAVEGATEL.svg"}
+              src={theme === 'dark' ? "src/client/assets/img/WooSocialDarkMode.svg" : "src/client/assets/img/WooSocial.svg"}
               alt="RRSS NAVEGATEL"
               className="w-[200px]"
             />
