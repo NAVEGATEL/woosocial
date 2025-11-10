@@ -212,6 +212,7 @@ Thumbs.db
 dist/
 build/
 
+vite.config.mts
 # Docker files - INCLUIR EN GIT (no ignorar)
 # Los siguientes archivos DEBEN estar en el repositorio:
 # - Dockerfile
