@@ -618,34 +618,25 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
               {/* Indicador de generación activo */}
-              {generatingAI && (
-                <div className="mb-4 p-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 border-2 border-purple-300 dark:border-purple-700 rounded-lg">
-                  <div className="flex items-center justify-center space-x-4">
-                    <AILoader className="w-8 h-8" />
-                    <div className="text-center">
-                      <p className="text-lg font-semibold text-purple-800 dark:text-purple-200">
-                        🤖 Analizando tu video con Gemini AI...
-                      </p>
-                      <p className="text-sm text-purple-600 dark:text-purple-300 mt-1">
-                        Esto puede tomar unos segundos
-                      </p>
+              {generatingAI ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <AILoader className="w-24 h-24 mb-6" />
+                  <p className="text-lg text-gray-600 dark:text-gray-300">
+                    Creando el post perfecto para ti
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {aiError && (
+                    <div className="mb-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-200">
+                      {aiError}
                     </div>
-                  </div>
-                </div>
-              )}
+                  )}
 
-              {aiError && (
-                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-200">
-                  {aiError}
-                </div>
-              )}
-
-              <div className="space-y-4">
+                  <div className="space-y-4">
                 {video && (
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
-                    <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-                      <strong>📹 Video que será analizado:</strong>
-                    </p>
+                 
+                  
                     <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-lg overflow-hidden">
                       <video
                         src={video.video_url}
@@ -653,10 +644,8 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
                         controls={false}
                       />
                     </div>
-                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                      Gemini AI analizará el contenido visual, audio, movimientos, colores y texto del video para crear una publicación personalizada.
-                    </p>
-                  </div>
+                    
+                  
                 )}
 
                 <div>
@@ -704,6 +693,8 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
                   </div>
                 )}
               </div>
+                </>
+              )}
             </div>
 
             {/* Footer */}
@@ -722,7 +713,7 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
                 <button
                   onClick={handleGenerateAIContent}
                   disabled={generatingAI || !aiTargetAudience || !aiPostGoal}
-                  className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-md hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className="px-6 py-2 bg-purple-700 text-white rounded-md hover:bg-purple-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
                   {generatingAI ? (
                     <>
