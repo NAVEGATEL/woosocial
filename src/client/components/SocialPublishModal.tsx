@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaInstagram, FaTiktok, FaFacebook, FaMobileAlt } from 'react-icons/fa';
+import { FaInstagram, FaTiktok, FaFacebook, FaMobileAlt, FaMagic } from 'react-icons/fa';
 import { Video } from '../types';
 import { apiService } from '../services/api';
 import AILoader from './AILoader';
+import { generateSocialContent } from '../services/gemini';
 
 interface WooCommerceProduct {
   id: number;
@@ -37,14 +38,6 @@ interface SocialPlatform {
   account_id?: string | null;
 }
 
-interface SocialTemplate {
-  id: string;
-  name: string;
-  content: string;
-  hashtags: string[];
-  emojis: string[];
-}
-
 const SocialPublishModal: React.FC<SocialPublishModalProps> = ({ 
   isOpen, 
   onClose, 
@@ -64,74 +57,19 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
   const [webhookConfigured, setWebhookConfigured] = useState<boolean | null>(null);
   const [webhookUrl, setWebhookUrl] = useState<string | null>(null);
 
-  const [templates, setTemplates] = useState<SocialTemplate[]>([
-    {
-      id: 'product-showcase',
-      name: 'Mostrar Producto',
-      content: '¡Mira este increíble producto! 🛍️\n\n{product_name} - {product_description}\n\n✨ Características destacadas:\n• {feature1}\n• {feature2}\n• {feature3}\n\n💰 Precio: {price}\n🔗 Enlace: {product_url}',
-      hashtags: ['#producto', '#oferta', '#calidad', '#recomendado'],
-      emojis: ['🛍️', '✨', '💰', '🔗', '⭐']
-    },
-    {
-      id: 'tutorial',
-      name: 'Tutorial',
-      content: '📚 Tutorial paso a paso\n\nAprende cómo usar {product_name} de manera efectiva:\n\n1️⃣ {step1}\n2️⃣ {step2}\n3️⃣ {step3}\n\n💡 Consejo: {tip}\n\n¿Te gustó? ¡Déjame tu comentario! 👇',
-      hashtags: ['#tutorial', '#aprende', '#tips', '#educativo'],
-      emojis: ['📚', '💡', '👆', '👇', '🎯']
-    },
-    {
-      id: 'lifestyle',
-      name: 'Estilo de Vida',
-      content: '✨ Mi día con {product_name}\n\n{personal_story}\n\nEste producto ha cambiado mi rutina de {activity} completamente. ¡No puedo vivir sin él! 😍\n\n¿Has probado algo similar? Cuéntame tu experiencia 💬',
-      hashtags: ['#lifestyle', '#rutina', '#experiencia', '#recomendacion'],
-      emojis: ['✨', '😍', '💬', '❤️', '🌟']
-    },
-    {
-      id: 'promotion',
-      name: 'Promoción',
-      content: '🎉 ¡OFERTA ESPECIAL! 🎉\n\n{product_name} con descuento del {discount}%\n\n⏰ Solo por tiempo limitado\n💰 Precio original: {original_price}\n💸 Precio con descuento: {discounted_price}\n\n🚀 ¡No te lo pierdas!',
-      hashtags: ['#oferta', '#descuento', '#promocion', '#ahorro'],
-      emojis: ['🎉', '⏰', '💰', '💸', '🚀']
-    }
-  ]);
-
-  const [selectedTemplate, setSelectedTemplate] = useState<SocialTemplate | null>(null);
   const [customContent, setCustomContent] = useState('');
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishSuccess, setPublishSuccess] = useState(false);
-  const [manualProductName, setManualProductName] = useState('');
+  
+  // Estados para generación con IA
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiTargetAudience, setAiTargetAudience] = useState('');
+  const [aiPostGoal, setAiPostGoal] = useState('');
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
-  // Función para reemplazar placeholders en los templates
-  const replaceTemplatePlaceholders = (content: string): string => {
-    // Usar producto si está disponible, si no usar el nombre manual
-    const productName = product?.name || manualProductName || 'Producto';
-    const productDescription = product?.description || product?.short_description || 'Descripción del producto';
-    const productPrice = product?.price || 'Precio no disponible';
-    
-    if (!product && !manualProductName) return content;
-    
-    return content
-      .replace(/\{product_name\}/g, productName)
-      .replace(/\{product_description\}/g, productDescription)
-      .replace(/\{price\}/g, productPrice)
-      .replace(/\{original_price\}/g, product?.regular_price || product?.price || 'Precio original')
-      .replace(/\{discounted_price\}/g, product?.sale_price || product?.price || 'Precio con descuento')
-      .replace(/\{discount\}/g, product?.regular_price && product?.sale_price 
-        ? Math.round(((parseFloat(product.regular_price) - parseFloat(product.sale_price)) / parseFloat(product.regular_price)) * 100).toString()
-        : 'XX')
-      .replace(/\{feature1\}/g, 'Característica destacada 1')
-      .replace(/\{feature2\}/g, 'Característica destacada 2')
-      .replace(/\{feature3\}/g, 'Característica destacada 3')
-      .replace(/\{step1\}/g, 'Paso 1')
-      .replace(/\{step2\}/g, 'Paso 2')
-      .replace(/\{step3\}/g, 'Paso 3')
-      .replace(/\{tip\}/g, 'Consejo útil')
-      .replace(/\{personal_story\}/g, 'Mi experiencia personal')
-      .replace(/\{activity\}/g, 'actividad')
-      .replace(/\{product_url\}/g, product?.permalink || '#');
-  };
 
   // Obtener conexiones sociales conectadas al abrir el modal
   useEffect(() => {
@@ -195,13 +133,6 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (selectedTemplate) {
-      const processedContent = replaceTemplatePlaceholders(selectedTemplate.content);
-      setCustomContent(processedContent);
-      setSelectedHashtags(selectedTemplate.hashtags);
-    }
-  }, [selectedTemplate, product, manualProductName]);
 
   const togglePlatform = (platformId: string) => {
     setPlatforms(prev => prev.map(p => 
@@ -221,8 +152,60 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
     return platforms.filter(p => p.selected);
   };
 
+  const handleGenerateAIContent = async () => {
+    const selectedPlatforms = getSelectedPlatforms();
+    if (selectedPlatforms.length === 0) {
+      setAiError('Por favor selecciona al menos una red social antes de generar contenido');
+      return;
+    }
+
+    if (!aiTargetAudience || !aiPostGoal) {
+      setAiError('Por favor completa todos los campos requeridos');
+      return;
+    }
+
+    if (!video || !video.video_url) {
+      setAiError('No se pudo obtener la URL del video');
+      return;
+    }
+
+    try {
+      setGeneratingAI(true);
+      setAiError(null);
+
+      // Generar contenido para la primera plataforma seleccionada
+      // (puedes expandir esto para generar para todas)
+      const firstPlatform = selectedPlatforms[0].id as 'tiktok' | 'instagram' | 'facebook';
+      
+      const result = await generateSocialContent({
+        platform: firstPlatform,
+        videoUrl: video.video_url,
+        targetAudience: aiTargetAudience,
+        postGoal: aiPostGoal,
+        productName: product?.name,
+        productDescription: product?.description || product?.short_description
+      });
+
+      // Actualizar el contenido generado
+      setCustomContent(result.text);
+      setSelectedHashtags(result.hashtags);
+      
+      // Cerrar el modal de IA
+      setShowAIModal(false);
+      
+      // Resetear campos
+      setAiTargetAudience('');
+      setAiPostGoal('');
+    } catch (error: any) {
+      console.error('Error al generar contenido con IA:', error);
+      setAiError(error.message || 'Error al generar contenido con IA');
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
   const renderSinglePreview = (platform: SocialPlatform) => {
-    const content = replaceTemplatePlaceholders(customContent);
+    const content = customContent;
     const hashtags = selectedHashtags;
 
     switch (platform.id) {
@@ -456,74 +439,63 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
                 )}
               </div>
 
-              {/* Template Selection */}
+              {/* Generación con IA */}
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Templates de Publicación</h3>
-                <div className="space-y-2">
-                  {templates.map(template => (
-                    <button
-                      key={template.id}
-                      onClick={() => setSelectedTemplate(template)}
-                      className={`w-full p-3 text-left rounded-lg border-2 transition-all ${
-                        selectedTemplate?.id === template.id
-                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900 dark:border-purple-600'
-                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700'
-                      }`}
-                    >
-                      <div className="font-medium text-sm text-gray-900 dark:text-white">{template.name}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {template.content.substring(0, 100)}...
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Generar Contenido Automático</h3>
+                <button
+                  onClick={() => setShowAIModal(true)}
+                  disabled={getSelectedPlatforms().length === 0}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-purple-600 dark:bg-purple-700 text-white rounded-lg hover:bg-purple-700 dark:hover:bg-purple-800 text-base font-medium shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-600"
+                >
+                  <FaMagic size={18} />
+                  <span>Generar Contenido con IA</span>
+                </button>
               </div>
 
-              {/* Product Name Input (si no hay producto) */}
-              {!product && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Nombre del Producto</h3>
-                  <input
-                    type="text"
-                    value={manualProductName}
-                    onChange={(e) => setManualProductName(e.target.value)}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                    placeholder="Ingresa el nombre del producto..."
-                  />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Este nombre se usará para reemplazar {`{product_name}`} en los templates</p>
+              {/* Contenido y Hashtags Generados */}
+              {(customContent || selectedHashtags.length > 0) && (
+                <div className="space-y-4 p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
+                  <div className="flex items-center space-x-2 text-green-700 dark:text-green-200">
+                    <span className="text-xl">✅</span>
+                    <h3 className="font-semibold">Contenido Generado por IA</h3>
+                  </div>
+                  
+                  {customContent && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Texto del Post:
+                      </label>
+                      <textarea
+                        value={customContent}
+                        onChange={(e) => setCustomContent(e.target.value)}
+                        className="w-full h-32 p-3 border border-green-300 dark:border-green-600 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                  )}
+                  
+                  {selectedHashtags.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Hashtags Sugeridos:
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedHashtags.map((hashtag, index) => (
+                          <button
+                            key={index}
+                            onClick={() => toggleHashtag(hashtag)}
+                            className="px-3 py-1 rounded-full text-sm bg-green-500 dark:bg-green-600 text-white hover:bg-green-600 dark:hover:bg-green-700 transition-all"
+                          >
+                            {hashtag}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        Haz clic en un hashtag para quitarlo
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
-
-              {/* Custom Content */}
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Contenido Personalizado</h3>
-                <textarea
-                  value={customContent}
-                  onChange={(e) => setCustomContent(e.target.value)}
-                  className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Escribe tu contenido personalizado aquí..."
-                />
-              </div>
-
-              {/* Hashtags */}
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Hashtags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedTemplate?.hashtags.map(hashtag => (
-                    <button
-                      key={hashtag}
-                      onClick={() => toggleHashtag(hashtag)}
-                      className={`px-3 py-1 rounded-full text-sm transition-all ${
-                        selectedHashtags.includes(hashtag)
-                          ? 'bg-purple-500 dark:bg-purple-600 text-white hover:bg-purple-600 dark:hover:bg-purple-700'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                      }`}
-                    >
-                      {hashtag}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Right Column - Preview */}
@@ -556,7 +528,15 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
               <button
                 onClick={async () => {
                   const selectedPlatforms = platforms.filter(p => p.selected);
-                  if (selectedPlatforms.length === 0) return;
+                  if (selectedPlatforms.length === 0) {
+                    setPublishError('Selecciona al menos una red social');
+                    return;
+                  }
+                  
+                  if (!customContent) {
+                    setPublishError('Genera contenido con IA antes de publicar');
+                    return;
+                  }
 
                   try {
                     setPublishing(true);
@@ -564,10 +544,8 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
                     setPublishSuccess(false);
 
                     // Combinar contenido y hashtags para el mensaje
-                    // Aplicar reemplazo de placeholders al mensaje final también
-                    const processedContent = replaceTemplatePlaceholders(customContent);
                     const fullMessage = [
-                      processedContent,
+                      customContent,
                       selectedHashtags.length > 0 ? selectedHashtags.map(tag => tag.startsWith('#') ? tag : `#${tag}`).join(' ') : ''
                     ].filter(Boolean).join('\n\n');
 
@@ -605,15 +583,164 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
                     setPublishing(false);
                   }
                 }}
-                disabled={platforms.filter(p => p.selected).length === 0 || publishing}
+                disabled={platforms.filter(p => p.selected).length === 0 || publishing || !customContent}
                 className="px-6 py-2 bg-purple-600 dark:bg-purple-700 text-white rounded-md hover:bg-purple-700 dark:hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {publishing ? 'Publicando...' : publishSuccess ? '✓ Publicado' : webhookConfigured === false ? 'Configurar Webhook' : 'Publicar'}
+                {publishing ? 'Publicando...' : publishSuccess ? '✓ Publicado' : !customContent ? 'Genera contenido primero' : webhookConfigured === false ? 'Configurar Webhook' : 'Publicar'}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal de Generación con IA */}
+      {showAIModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <FaMagic className="text-purple-500" size={24} />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Generar Contenido con IA</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setShowAIModal(false);
+                  setAiError(null);
+                }}
+                disabled={generatingAI}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Indicador de generación activo */}
+              {generatingAI && (
+                <div className="mb-4 p-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 border-2 border-purple-300 dark:border-purple-700 rounded-lg">
+                  <div className="flex items-center justify-center space-x-4">
+                    <AILoader className="w-8 h-8" />
+                    <div className="text-center">
+                      <p className="text-lg font-semibold text-purple-800 dark:text-purple-200">
+                        🤖 Analizando tu video con Gemini AI...
+                      </p>
+                      <p className="text-sm text-purple-600 dark:text-purple-300 mt-1">
+                        Esto puede tomar unos segundos
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {aiError && (
+                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-200">
+                  {aiError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {video && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+                      <strong>📹 Video que será analizado:</strong>
+                    </p>
+                    <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-lg overflow-hidden">
+                      <video
+                        src={video.video_url}
+                        className="w-full h-full object-cover"
+                        controls={false}
+                      />
+                    </div>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                      Gemini AI analizará el contenido visual, audio, movimientos, colores y texto del video para crear una publicación personalizada.
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block font-semibold text-gray-900 dark:text-white mb-2">
+                    Público objetivo <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={aiTargetAudience}
+                    onChange={(e) => setAiTargetAudience(e.target.value)}
+                    disabled={generatingAI}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="Ej: Madres jóvenes de 25-35 años, interesadas en productos para el hogar"
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Define quién es tu audiencia ideal: edad, intereses, comportamiento
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-900 dark:text-white mb-2">
+                    Objetivo de la publicación <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={aiPostGoal}
+                    onChange={(e) => setAiPostGoal(e.target.value)}
+                    disabled={generatingAI}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="Ej: Generar ventas, aumentar seguidores, crear engagement, educar"
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    ¿Qué quieres lograr con esta publicación?
+                  </p>
+                </div>
+
+                {product && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      <strong>📦 Producto detectado:</strong> {product.name}
+                      {product?.description && (
+                        <span className="block mt-1 text-xs">{product.description.substring(0, 150)}...</span>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-700">
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowAIModal(false);
+                    setAiError(null);
+                  }}
+                  disabled={generatingAI}
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 bg-white dark:bg-gray-800 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleGenerateAIContent}
+                  disabled={generatingAI || !aiTargetAudience || !aiPostGoal}
+                  className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-md hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  {generatingAI ? (
+                    <>
+                      <AILoader className="w-5 h-5" />
+                      <span>Generando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaMagic size={16} />
+                      <span>Generar Contenido</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

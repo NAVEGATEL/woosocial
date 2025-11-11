@@ -101,8 +101,6 @@ router.get('/messages', async (req: AuthRequest, res: Response) => {
         l.ip_address,
         l.user_agent,
         l.fecha,
-        l.is_done,
-        l.solucion,
         u.nombre_usuario,
         u.email
       FROM logs_sistema l
@@ -128,8 +126,6 @@ router.get('/messages', async (req: AuthRequest, res: Response) => {
         ip_address: row.ip_address,
         user_agent: row.user_agent,
         fecha: row.fecha,
-        is_done: row.is_done || false,
-        solucion: row.solucion || null,
         nombre_usuario: row.nombre_usuario || 'Usuario eliminado',
         email: row.email || 'N/A'
       };

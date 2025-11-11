@@ -559,6 +559,37 @@ class ApiService {
   async healthCheck(): Promise<{ status: string; message: string; timestamp: string }> {
     return this.request<{ status: string; message: string; timestamp: string }>('/health');
   }
+
+  // Gemini AI - Generar contenido para redes sociales
+  async generateSocialContentWithAI(data: {
+    platform: 'tiktok' | 'instagram' | 'facebook';
+    videoUrl: string;
+    targetAudience: string;
+    postGoal: string;
+    productName?: string;
+    productDescription?: string;
+  }): Promise<{ 
+    success: boolean; 
+    data: {
+      text: string;
+      hashtags: string[];
+      cta: string;
+    };
+    message?: string;
+  }> {
+    return this.request<{ 
+      success: boolean; 
+      data: {
+        text: string;
+        hashtags: string[];
+        cta: string;
+      };
+      message?: string;
+    }>('/gemini/generate-content', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
 }
 
 export const apiService = new ApiService();

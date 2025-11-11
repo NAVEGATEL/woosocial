@@ -10,6 +10,7 @@ Un sistema completo de gestión de tokens/puntos que integra con WooCommerce, N8
 - **Webhook N8N**: Integración con flujos de automatización
 - **Pagos con Stripe**: Compra de puntos mediante Stripe (5 packs disponibles)
 - **Redes Sociales**: Conexión y publicación en Instagram, Facebook, Twitter, TikTok, YouTube, LinkedIn y Pinterest
+- **Generación de Contenido con IA**: Gemini AI analiza videos automáticamente (visual + audio) y crea contenido optimizado para cada red social
 - **Base de Datos MySQL**: Sistema robusto con múltiples tablas y relaciones
 - **API REST**: Backend completo con Express y TypeScript
 - **Frontend React**: Interfaz moderna con Tailwind CSS y modo oscuro
@@ -266,6 +267,7 @@ graph TB
 - **express-rate-limit** - Rate limiting
 - **Stripe** - Procesamiento de pagos
 - **node-fetch** - Cliente HTTP
+- **@google/generative-ai** - Integración con Gemini AI (análisis de video multimodal con API keys)
 
 ### Frontend
 - **React 19** - Biblioteca de UI
@@ -311,6 +313,11 @@ graph TB
    SECRET_Stripe_API_KEY=tu_stripe_secret_key
    
    N8N_WEBHOOK_URL=http://localhost:5678/webhook
+   
+   # Gemini AI (usa una de estas dos opciones)
+   GOOGLE_CLOUD_API_KEY=tu_google_cloud_api_key
+   # o
+   VITE_GOOGLE_CLOUD_API_KEY=tu_google_cloud_api_key
    ```
 
 3. **Ejecutar con Docker Compose**
@@ -359,6 +366,11 @@ graph TB
    SECRET_Stripe_API_KEY=tu_stripe_secret_key
    
    N8N_WEBHOOK_URL=http://localhost:5678/webhook
+   
+   # Gemini AI (usa una de estas dos opciones)
+   GOOGLE_CLOUD_API_KEY=tu_google_cloud_api_key
+   # o
+   VITE_GOOGLE_CLOUD_API_KEY=tu_google_cloud_api_key
    ```
 
 ## 🚀 Uso
@@ -479,6 +491,30 @@ docker compose down
 3. Conecta las cuentas desde la interfaz de usuario
 4. Las credenciales se almacenan cifradas en la base de datos
 
+### Google Gemini AI (Generación de Contenido con Análisis de Video)
+
+⚠️ **Para análisis de video se requiere OAuth2** - Las API Keys simples no funcionan con video multimodal.
+
+#### Configuración OAuth2 (Requerido)
+
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. Crea un **Service Account** con rol "Vertex AI User"
+3. Descarga el archivo JSON de credenciales
+4. Guárdalo en `src/services/drive/` del proyecto
+5. Agrega a tu archivo `.env`:
+   ```env
+   GOOGLE_APPLICATION_CREDENTIALS=src/services/drive/nombre-archivo.json
+   ```
+6. **Reinicia el servidor** completamente
+7. La funcionalidad estará disponible en el modal de publicación
+8. Gemini analizará automáticamente el contenido visual, audio, movimientos y texto de tus videos
+
+**Modelo usado**: `gemini-2.5-flash-preview-09-2025` (con OAuth2 para video multimodal)
+
+**Documentación Completa**:
+- [Configuración OAuth2 (REQUERIDO)](docs/GEMINI_OAUTH2_SETUP.md) - Guía paso a paso para Service Account
+- [Documentación General](docs/GEMINI_AI_SETUP.md) - Información adicional
+
 ## 🛡️ Seguridad
 
 - Contraseñas encriptadas con bcrypt (salt rounds: 10)
@@ -537,3 +573,4 @@ Si tienes problemas o preguntas, por favor abre un issue en el repositorio.
 - [Docker Development](docs/README-Docker-Dev.md)
 - [Docker Production](docs/README-Docker-Prod.md)
 - [Preferencias Implementation](docs/PREFERENCIAS_IMPLEMENTATION.md)
+- [Gemini AI Setup](docs/GEMINI_AI_SETUP.md) - Guía completa para configurar la generación de contenido con IA

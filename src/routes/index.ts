@@ -10,6 +10,7 @@ import videoCallbackRoutes from './video-callback';
 import socialRoutes from './social';
 import contactRoutes from './contact';
 import n8nRoutes from './n8n';
+import geminiRoutes from './gemini';
 
 const router = Router();
 
@@ -45,6 +46,9 @@ router.use('/video-callback', videoCallbackRoutes);
 
 // Rutas de N8N
 router.use('/n8n', n8nRoutes);
+
+// Rutas de Gemini AI
+router.use('/gemini', geminiRoutes);
 
 // Ruta de salud del API
 router.get('/health', (req, res) => {
