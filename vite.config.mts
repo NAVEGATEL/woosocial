@@ -23,6 +23,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist/client',
+    sourcemap: false,
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom']
