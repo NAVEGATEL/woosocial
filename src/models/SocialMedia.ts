@@ -34,6 +34,7 @@ export interface SocialConnectionsResponse {
     connected: boolean;
     username: string | null;
     account_id: string | null;
+    app_id: string | null;
   }>;
 }
 

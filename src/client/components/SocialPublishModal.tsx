@@ -36,6 +36,7 @@ interface SocialPlatform {
   color: string;
   selected: boolean;
   account_id?: string | null;
+  app_id?: string | null;
 }
 
 const SocialPublishModal: React.FC<SocialPublishModalProps> = ({ 
@@ -119,7 +120,8 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
           return {
             ...platform,
             selected: false,
-            account_id: connection?.account_id || null
+            account_id: connection?.account_id || null,
+            app_id: connection?.app_id || null
           };
         });
 
@@ -549,10 +551,11 @@ const SocialPublishModal: React.FC<SocialPublishModalProps> = ({
                       selectedHashtags.length > 0 ? selectedHashtags.map(tag => tag.startsWith('#') ? tag : `#${tag}`).join(' ') : ''
                     ].filter(Boolean).join('\n\n');
 
-                    // Preparar datos con plataforma y account_id
+                    // Preparar datos con plataforma, account_id y app_id (para Facebook)
                     const socialPlatformsData = selectedPlatforms.map(p => ({
                       plataforma: p.id,
-                      account_id: p.account_id || null
+                      account_id: p.account_id || null,
+                      app_id: p.app_id || null
                     }));
 
                     await apiService.publishToSocialMedia({

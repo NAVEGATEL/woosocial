@@ -674,6 +674,7 @@ router.put('/users/:id/social/:plataforma', [
   body('is_active').optional().isBoolean(),
   body('access_token').optional().isString(),
   body('username').optional().isString(),
+  body('app_id').optional().isString(),
 ], async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -709,6 +710,7 @@ router.put('/users/:id/social/:plataforma', [
       access_token: req.body.access_token,
       username: req.body.username,
       is_active: req.body.is_active,
+      app_id: req.body.app_id,
     };
 
     // Eliminar campos undefined

@@ -426,6 +426,7 @@ class ApiService {
     is_active?: boolean;
     access_token?: string;
     username?: string;
+    app_id?: string;
   }): Promise<{ credential: any; message: string }> {
     return this.request<{ credential: any; message: string }>(`/admin/users/${userId}/social/${plataforma}`, {
       method: 'PUT',

@@ -54,6 +54,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         connected: isConnected,
         username: found?.username ?? null,
         account_id: found?.account_id ?? null,
+        app_id: found?.app_id ?? null,
       };
     });
 
@@ -123,6 +124,7 @@ router.post(
     body('social_platforms').isArray().notEmpty().withMessage('Debe seleccionar al menos una red social'),
     body('social_platforms.*.plataforma').isString().notEmpty().withMessage('Plataforma requerida'),
     body('social_platforms.*.account_id').optional().isString(),
+    body('social_platforms.*.app_id').optional().isString(),
     body('message').isString().optional(),
   ],
   async (req: AuthRequest, res: Response) => {
@@ -165,7 +167,8 @@ router.post(
         const platformKey = `${sp.plataforma}_platform`;
         webhookData[platformKey] = {
           name: sp.plataforma,
-          account_id: sp.account_id || null
+          account_id: sp.account_id || null,
+          app_id: sp.app_id || null
         };
       });
 
